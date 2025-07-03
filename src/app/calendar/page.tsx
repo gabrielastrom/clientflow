@@ -42,7 +42,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from "date-fns";
 
 
@@ -186,134 +186,126 @@ export default function CalendarPage() {
           Add Appointment
         </Button>
       </div>
-      <div className="flex flex-col gap-6">
-        <Card className="w-full min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-3">
+          <Card>
             <CardHeader>
-                <CardTitle>
-                  Weekly Agenda
-                </CardTitle>
-                <CardDescription>
-                  Events and deadlines for the selected week.
-                </CardDescription>
+                <CardTitle>Weekly Agenda</CardTitle>
+                <CardDescription>Events and deadlines for the selected week.</CardDescription>
             </CardHeader>
-            <CardContent className="p-6">
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex space-x-6 pb-4">
-                  {weekDates.length > 0 ? weekDates.map((day) => {
+            <CardContent>
+              <ScrollArea className="h-[65vh] w-full">
+                <div className="space-y-6 pr-4">
+                  {weekDates.map((day) => {
                     const dayAppointments = weeklyAppointments
                       .filter((appt) => isSameDay(new Date(appt.date), day))
                       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
+                    if (dayAppointments.length === 0) {
+                      return null;
+                    }
+
                     return (
-                      <div key={day.toString()} className="w-[300px] flex-shrink-0">
-                        <h3 className="font-semibold text-md mb-4 sticky top-0 bg-card py-2">{format(day, 'EEEE, MMM d')}</h3>
+                      <div key={day.toString()}>
+                        <h3 className="font-semibold text-md mb-3 sticky top-0 bg-card py-2 z-10 border-b">{format(day, 'EEEE, MMM d')}</h3>
                         <div className="space-y-4">
-                          {dayAppointments.length > 0 ? (
-                            dayAppointments.map((appt) => (
-                              <div
-                                key={appt.id}
-                                className="p-4 rounded-lg bg-muted/50 h-full flex flex-col justify-between cursor-pointer hover:bg-muted"
-                                onClick={() => {
+                          {dayAppointments.map((appt) => (
+                            <div
+                              key={appt.id}
+                              className="p-3 rounded-lg bg-muted/50 flex justify-between items-center cursor-pointer hover:bg-muted"
+                              onClick={() => {
                                   setSelectedAppointment(appt);
                                   setIsViewOpen(true);
-                                }}
-                              >
-                                <div className="flex justify-between items-start gap-4">
-                                  <div className="whitespace-normal">
-                                    <p className="font-semibold">{appt.title}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {new Date(appt.date).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })}
-                                    </p>
-                                  </div>
+                              }}
+                            >
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <div className="w-20 text-center flex-shrink-0">
+                                  <p className="font-semibold text-primary">{format(new Date(appt.date), 'HH:mm')}</p>
                                   <Badge
-                                    variant={
-                                      appt.type === "Deadline"
-                                        ? "destructive"
-                                        : "secondary"
-                                    }
-                                    className="flex-shrink-0"
+                                    variant={appt.type === "Deadline" ? "destructive" : "secondary"}
+                                    className="mt-1"
                                   >
                                     {appt.type}
                                   </Badge>
                                 </div>
-                                <div className="flex justify-end mt-2" onClick={(e) => e.stopPropagation()}>
-                                   <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        aria-haspopup="true"
-                                        size="icon"
-                                        variant="ghost"
-                                      >
-                                        <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Toggle menu</span>
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                      <DropdownMenuItem
-                                        onSelect={() => {
-                                          setSelectedAppointment(appt);
-                                          setIsEditOpen(true);
-                                        }}
-                                      >
-                                        Edit
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                        onSelect={() => {
-                                          setSelectedAppointment(appt);
-                                          setIsDeleteAlertOpen(true);
-                                        }}
-                                      >
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
+                                <div className="border-l pl-4 flex-1 min-w-0">
+                                  <p className="font-semibold whitespace-normal truncate">{appt.title}</p>
+                                  <p className="text-sm text-muted-foreground">{allClients.find(c => c.id === appt.clientId)?.name}</p>
                                 </div>
                               </div>
-                            ))
-                          ) : (
-                            <div className="text-sm text-muted-foreground h-24 flex items-center justify-center rounded-lg border-2 border-dashed">
-                              <p>No events scheduled.</p>
+                              <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      aria-haspopup="true"
+                                      size="icon"
+                                      variant="ghost"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                      <span className="sr-only">Toggle menu</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem
+                                      onSelect={() => {
+                                        setSelectedAppointment(appt);
+                                        setIsEditOpen(true);
+                                      }}
+                                    >
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                      onSelect={() => {
+                                        setSelectedAppointment(appt);
+                                        setIsDeleteAlertOpen(true);
+                                      }}
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </div>
-                          )}
+                          ))}
                         </div>
                       </div>
                     )
-                  }) : (
-                    <p className="text-center text-muted-foreground py-8 w-full">
-                      No events scheduled for this week.
-                    </p>
+                  })}
+                  {weeklyAppointments.length === 0 && (
+                    <div className="text-sm text-muted-foreground h-24 flex items-center justify-center rounded-lg border-2 border-dashed">
+                      <p>No events scheduled for this week.</p>
+                    </div>
                   )}
                 </div>
-                <ScrollBar orientation="horizontal" />
               </ScrollArea>
             </CardContent>
-        </Card>
-        <Card className="w-full">
-            <CardContent className="p-0">
-                <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="w-full"
-                    classNames={{
-                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 p-4",
-                        month: "space-y-4 flex-1",
-                        table: "w-full border-collapse space-y-1",
-                        head_row: "flex justify-around",
-                        row: "flex w-full mt-2 justify-around",
-                    }}
-                    components={{
-                      DayContent: DayContentWithDot,
-                    }}
-                />
-            </CardContent>
-        </Card>
+          </Card>
+        </div>
+        <div className="lg:col-span-2">
+            <Card>
+                <CardContent className="p-0">
+                    <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        className="w-full"
+                        classNames={{
+                            months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 p-4",
+                            month: "space-y-4 flex-1",
+                            table: "w-full border-collapse space-y-1",
+                            head_row: "flex justify-around",
+                            row: "flex w-full mt-2 justify-around",
+                        }}
+                        components={{
+                          DayContent: DayContentWithDot,
+                        }}
+                    />
+                </CardContent>
+            </Card>
+        </div>
       </div>
 
        {/* Add Appointment Dialog */}
