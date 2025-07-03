@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
+import { Footer } from "./footer";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -121,6 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <main className="flex-1 p-4 sm:p-6 lg:p-8">
                 {children}
             </main>
+            <Footer />
         </SidebarInset>
       </div>
     </SidebarProvider>
@@ -152,49 +154,65 @@ function NavItem({
 }
 
 function UserMenu({ isMobile = false }) {
-    const trigger = isMobile ? (
-        <Button variant="ghost" size="icon" className="rounded-full">
+  const trigger = (
+    <Button variant="ghost" size="icon" className="rounded-full md:hidden">
+      <Avatar className="h-8 w-8">
+        <AvatarImage
+          src="https://placehold.co/100x100.png"
+          data-ai-hint="person user"
+          alt="User Avatar"
+        />
+        <AvatarFallback>AD</AvatarFallback>
+      </Avatar>
+    </Button>
+  );
+
+  const dropdownMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {isMobile ? (
+          trigger
+        ) : (
+          <SidebarMenuButton className="h-auto group-data-[collapsible=icon]:p-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person user" alt="User Avatar" />
+              <AvatarImage
+                src="https://placehold.co/100x100.png"
+                data-ai-hint="person user"
+                alt="User Avatar"
+              />
               <AvatarFallback>AD</AvatarFallback>
             </Avatar>
-        </Button>
-    ) : (
-        <SidebarMenuButton className="h-auto group-data-[collapsible=icon]:p-2">
-            <Avatar className="h-8 w-8">
-                <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person user" alt="User Avatar" />
-                <AvatarFallback>AD</AvatarFallback>
-            </Avatar>
             <div className="group-data-[collapsible=icon]:hidden">
-                <p className="font-medium text-sm">Alex Doe</p>
-                <p className="text-xs text-muted-foreground">alex@clientflow.com</p>
+              <p className="font-medium text-sm">Alex Doe</p>
+              <p className="text-xs text-muted-foreground">
+                alex@clientflow.com
+              </p>
             </div>
-        </SidebarMenuButton>
-    );
+          </SidebarMenuButton>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        side={isMobile ? "bottom" : "right"}
+        align="end"
+        className="w-56"
+      >
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>Profile</DropdownMenuItem>
+        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>Log out</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
-    const dropdownMenu = (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                {trigger}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side={isMobile ? 'bottom' : 'right'} align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
-
-    if (isMobile) {
-        return dropdownMenu;
-    }
+  if (isMobile) {
+    return dropdownMenu;
+  }
 
   return (
     <SidebarMenuItem className="mt-auto">
-        {dropdownMenu}
+      {dropdownMenu}
     </SidebarMenuItem>
   );
 }
