@@ -269,8 +269,8 @@ export default function CalendarPage() {
                       </CarouselItem>
                     ))}
                   </CarouselContent>
-                  <CarouselPrevious />
-                  <CarouselNext />
+                  <CarouselPrevious className="left-[-1.5rem] md:left-2" />
+                  <CarouselNext className="right-[-1.5rem] md:right-2" />
                 </Carousel>
               ) : (
                 <p className="text-center text-muted-foreground py-8">
