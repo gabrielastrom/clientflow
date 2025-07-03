@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -51,6 +52,11 @@ import { useToast } from "@/hooks/use-toast";
 
 type SortableTimeEntryKeys = keyof TimeEntry;
 
+type MonthlySummary = {
+  teamMember: string;
+  totalHours: number;
+};
+
 export default function TrackingPage() {
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>(initialTimeEntries);
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
@@ -58,13 +64,39 @@ export default function TrackingPage() {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [defaultDate, setDefaultDate] = React.useState("");
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableTimeEntryKeys; direction: 'ascending' | 'descending' } | null>(null);
+  const [selectedMonth, setSelectedMonth] = React.useState<string>("");
+  const [monthlySummary, setMonthlySummary] = React.useState<MonthlySummary[]>([]);
+
 
   const { toast } = useToast();
 
   React.useEffect(() => {
     // Set the default date only on the client
-    setDefaultDate(new Date().toISOString().split("T")[0]);
+    const now = new Date();
+    setDefaultDate(now.toISOString().split("T")[0]);
+    setSelectedMonth(now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2));
   }, []);
+
+  React.useEffect(() => {
+    if (!selectedMonth) return;
+
+    const summary: Record<string, number> = {};
+
+    timeEntries
+      .filter(entry => entry.date.startsWith(selectedMonth))
+      .forEach(entry => {
+        if (!summary[entry.teamMember]) {
+          summary[entry.teamMember] = 0;
+        }
+        summary[entry.teamMember] += entry.duration;
+      });
+    
+    const summaryArray = Object.entries(summary)
+        .map(([teamMember, totalHours]) => ({ teamMember, totalHours }))
+        .sort((a,b) => b.totalHours - a.totalHours);
+
+    setMonthlySummary(summaryArray);
+  }, [selectedMonth, timeEntries]);
 
   const sortedTimeEntries = React.useMemo(() => {
     let sortableItems = [...timeEntries];
@@ -150,236 +182,276 @@ export default function TrackingPage() {
 
   return (
     <AppShell>
-      {/* Page Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Time Tracking</h1>
-          <p className="text-muted-foreground">
-            Log and review time spent on clients and tasks.
-          </p>
+      <div className="flex flex-col gap-6">
+        {/* Page Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Time Tracking</h1>
+            <p className="text-muted-foreground">
+              Log and review time spent on clients and tasks.
+            </p>
+          </div>
+          <Dialog open={isLogTimeOpen} onOpenChange={setIsLogTimeOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Log Time
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Log New Time Entry</DialogTitle>
+                <DialogDescription>
+                  Fill in the details for your time log.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleLogTimeSubmit}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="date" className="text-right">
+                      Date
+                    </Label>
+                    <Input id="date" name="date" type="date" defaultValue={defaultDate} key={defaultDate} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="teamMember" className="text-right">
+                      Team Member
+                    </Label>
+                    <Select name="teamMember" defaultValue={teamMembers[0]}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member} value={member}>{member}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="client" className="text-right">
+                      Client
+                    </Label>
+                    <Select name="client" defaultValue={clients[0].name}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="task" className="text-right">
+                      Task
+                    </Label>
+                    <Input id="task" name="task" placeholder="e.g., Weekly Sync" className="col-span-3" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="duration" className="text-right">
+                      Hours
+                    </Label>
+                    <Input id="duration" name="duration" type="number" step="0.01" placeholder="e.g., 1.5" className="col-span-3" required />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit">Save</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
-        <Dialog open={isLogTimeOpen} onOpenChange={setIsLogTimeOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Log Time
-            </Button>
-          </DialogTrigger>
+
+        {/* Time Entries Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Time Entries</CardTitle>
+            <CardDescription>
+              A log of all time tracked by the team.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('date')}>
+                      Date
+                      {getSortIcon('date')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('teamMember')}>
+                      Team Member
+                      {getSortIcon('teamMember')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('client')}>
+                      Client
+                      {getSortIcon('client')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('task')}>
+                      Task
+                      {getSortIcon('task')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Button variant="ghost" onClick={() => requestSort('duration')} className="justify-end w-full">
+                      Hours
+                      {getSortIcon('duration')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedTimeEntries.map((entry) => (
+                  <TableRow key={entry.id}>
+                    <TableCell>{entry.date}</TableCell>
+                    <TableCell className="font-medium">{entry.teamMember}</TableCell>
+                    <TableCell>{entry.client}</TableCell>
+                    <TableCell>{entry.task}</TableCell>
+                    <TableCell className="text-right">{entry.duration.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setSelectedEntry(entry);
+                              setIsEditOpen(true);
+                            }}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        
+        {/* Edit Time Entry Dialog */}
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Log New Time Entry</DialogTitle>
+              <DialogTitle>Edit Time Entry</DialogTitle>
               <DialogDescription>
-                Fill in the details for your time log.
+                Make changes to the time entry. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleLogTimeSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="date" className="text-right">
-                    Date
-                  </Label>
-                  <Input id="date" name="date" type="date" defaultValue={defaultDate} key={defaultDate} className="col-span-3" />
+            {selectedEntry && (
+              <form onSubmit={handleEditSubmit}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-date" className="text-right">Date</Label>
+                    <Input id="edit-date" name="date" type="date" defaultValue={selectedEntry.date} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-teamMember" className="text-right">Team Member</Label>
+                    <Select name="teamMember" defaultValue={selectedEntry.teamMember}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member} value={member}>{member}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-client" className="text-right">Client</Label>
+                    <Select name="client" defaultValue={selectedEntry.client}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-task" className="text-right">Task</Label>
+                    <Input id="edit-task" name="task" defaultValue={selectedEntry.task} className="col-span-3" required />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-duration" className="text-right">Hours</Label>
+                    <Input id="edit-duration" name="duration" type="number" step="0.01" defaultValue={selectedEntry.duration} className="col-span-3" required />
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="teamMember" className="text-right">
-                    Team Member
-                  </Label>
-                  <Select name="teamMember" defaultValue={teamMembers[0]}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {teamMembers.map((member) => (
-                        <SelectItem key={member} value={member}>{member}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="client" className="text-right">
-                    Client
-                  </Label>
-                  <Select name="client" defaultValue={clients[0].name}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="task" className="text-right">
-                    Task
-                  </Label>
-                  <Input id="task" name="task" placeholder="e.g., Weekly Sync" className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="duration" className="text-right">
-                    Hours
-                  </Label>
-                  <Input id="duration" name="duration" type="number" step="0.01" placeholder="e.g., 1.5" className="col-span-3" required />
-                </div>
-              </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <Button type="submit">Save</Button>
-              </DialogFooter>
-            </form>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">Cancel</Button>
+                  </DialogClose>
+                  <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
-      </div>
-
-      {/* Time Entries Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Time Entries</CardTitle>
-          <CardDescription>
-            A log of all time tracked by the team.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('date')}>
-                    Date
-                    {getSortIcon('date')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('teamMember')}>
-                    Team Member
-                    {getSortIcon('teamMember')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('client')}>
-                    Client
-                    {getSortIcon('client')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('task')}>
-                    Task
-                    {getSortIcon('task')}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <Button variant="ghost" onClick={() => requestSort('duration')} className="justify-end w-full">
-                    Hours
-                    {getSortIcon('duration')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedTimeEntries.map((entry) => (
-                <TableRow key={entry.id}>
-                  <TableCell>{entry.date}</TableCell>
-                  <TableCell className="font-medium">{entry.teamMember}</TableCell>
-                  <TableCell>{entry.client}</TableCell>
-                  <TableCell>{entry.task}</TableCell>
-                  <TableCell className="text-right">{entry.duration.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            setSelectedEntry(entry);
-                            setIsEditOpen(true);
-                          }}
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-      
-      {/* Edit Time Entry Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Time Entry</DialogTitle>
-            <DialogDescription>
-              Make changes to the time entry. Click save when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedEntry && (
-            <form onSubmit={handleEditSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-date" className="text-right">Date</Label>
-                  <Input id="edit-date" name="date" type="date" defaultValue={selectedEntry.date} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-teamMember" className="text-right">Team Member</Label>
-                  <Select name="teamMember" defaultValue={selectedEntry.teamMember}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {teamMembers.map((member) => (
-                        <SelectItem key={member} value={member}>{member}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-client" className="text-right">Client</Label>
-                  <Select name="client" defaultValue={selectedEntry.client}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {clients.map((client) => (
-                        <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-task" className="text-right">Task</Label>
-                  <Input id="edit-task" name="task" defaultValue={selectedEntry.task} className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-duration" className="text-right">Hours</Label>
-                  <Input id="edit-duration" name="duration" type="number" step="0.01" defaultValue={selectedEntry.duration} className="col-span-3" required />
-                </div>
+        
+        {/* Monthly Summary Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Monthly Summary</CardTitle>
+            <CardDescription>
+              Total hours logged by each team member for the selected month.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4 mb-6">
+              <Label htmlFor="month-select" className="shrink-0">Select Month</Label>
+              <Input
+                id="month-select"
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="w-48"
+              />
+            </div>
+            {monthlySummary.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {monthlySummary.map(item => (
+                  <div key={item.teamMember} className="flex justify-between items-center p-4 rounded-lg bg-muted/50">
+                    <p className="font-medium text-sm">{item.teamMember}</p>
+                    <p className="font-bold text-lg">{item.totalHours.toFixed(2)}h</p>
+                  </div>
+                ))}
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
-                <Button type="submit">Save Changes</Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+            ) : (
+              <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                <p>No time entries found for the selected month.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </AppShell>
   );
 }
+
+    
