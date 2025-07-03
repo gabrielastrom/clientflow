@@ -187,7 +187,7 @@ export default function CalendarPage() {
         </Button>
       </div>
       <div className="flex flex-col gap-6">
-        <Card className="w-full">
+        <Card className="w-full min-w-0">
             <CardHeader>
                 <CardTitle>
                   Weekly Agenda
