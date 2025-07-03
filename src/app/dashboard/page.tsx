@@ -31,7 +31,6 @@ type TeamPerformanceData = {
 export default function DashboardPage() {
   const [weeklyAppointments, setWeeklyAppointments] = React.useState<Appointment[]>([]);
   const [weekDates, setWeekDates] = React.useState<Date[]>([]);
-  const [newClientsThisQuarter, setNewClientsThisQuarter] = React.useState(0);
   const [doneContentCount, setDoneContentCount] = React.useState(0);
   const [totalContentCount, setTotalContentCount] = React.useState(0);
   const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
@@ -40,7 +39,6 @@ export default function DashboardPage() {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-    const currentQuarter = Math.floor(currentMonth / 3);
 
     // Calculate weekly appointments
     const start = startOfWeek(today, { weekStartsOn: 1 });
@@ -53,13 +51,6 @@ export default function DashboardPage() {
     ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     setWeeklyAppointments(filteredAppointments);
     setWeekDates(eachDayOfInterval({ start, end }));
-
-    // Calculate new clients this quarter
-    const newClientsCount = clients.filter(client => {
-      const joinDate = new Date(client.joinDate);
-      return joinDate.getFullYear() === currentYear && Math.floor(joinDate.getMonth() / 3) === currentQuarter;
-    }).length;
-    setNewClientsThisQuarter(newClientsCount);
 
     // Calculate content completion for the month
     const contentThisMonth = content.filter(c => {
@@ -102,7 +93,7 @@ export default function DashboardPage() {
             Welcome back! Here's a summary of your agency's performance.
           </p>
         </div>
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -145,21 +136,6 @@ export default function DashboardPage() {
               </div>
               <p className="text-xs text-muted-foreground">
                 +12.8% from last month
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                New Clients
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                +{newClientsThisQuarter}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                This quarter
               </p>
             </CardContent>
           </Card>
