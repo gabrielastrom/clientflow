@@ -26,7 +26,8 @@ type TeamPerformanceData = {
 export default function DashboardPage() {
   const [todaysAppointments, setTodaysAppointments] = React.useState<Appointment[]>([]);
   const [newClientsThisQuarter, setNewClientsThisQuarter] = React.useState(0);
-  const [contentCompletionRate, setContentCompletionRate] = React.useState(0);
+  const [doneContentCount, setDoneContentCount] = React.useState(0);
+  const [totalContentCount, setTotalContentCount] = React.useState(0);
   const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
 
   React.useEffect(() => {
@@ -48,7 +49,7 @@ export default function DashboardPage() {
     }).length;
     setNewClientsThisQuarter(newClientsCount);
 
-    // Calculate content completion rate for the month
+    // Calculate content completion for the month
     const contentThisMonth = content.filter(c => {
         const deadlineDate = new Date(c.deadline);
         return deadlineDate.getFullYear() === currentYear &&
@@ -56,10 +57,8 @@ export default function DashboardPage() {
     });
     const doneContentThisMonth = contentThisMonth.filter(c => c.status === 'Done').length;
     const totalContentThisMonth = contentThisMonth.length;
-    const completionRate = totalContentThisMonth > 0
-        ? Math.round((doneContentThisMonth / totalContentThisMonth) * 100)
-        : 0;
-    setContentCompletionRate(completionRate);
+    setDoneContentCount(doneContentThisMonth);
+    setTotalContentCount(totalContentThisMonth);
 
     // Calculate team performance (hours per member)
     const performanceData = team.map(member => {
@@ -165,10 +164,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {contentCompletionRate}%
+                {doneContentCount}/{totalContentCount}
               </div>
               <p className="text-xs text-muted-foreground">
-                Of this month's content is Done
+                Completed this month
               </p>
             </CardContent>
           </Card>
