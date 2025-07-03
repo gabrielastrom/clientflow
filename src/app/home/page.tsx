@@ -395,6 +395,15 @@ export default function HomePage() {
                             </Button>
                         </CardContent>
                     </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Notes</CardTitle>
+                            <CardDescription>Your personal scratchpad for quick notes and reminders.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Textarea placeholder="Type your notes here..." className="h-48 resize-none" />
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
