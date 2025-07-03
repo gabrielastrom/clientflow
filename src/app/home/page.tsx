@@ -209,7 +209,6 @@ export default function HomePage() {
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Welcome back, {CURRENT_USER.split(' ')[0]}!</h1>
-                    <p className="text-muted-foreground">Here's what's on your plate.</p>
                 </div>
                 <Button onClick={() => setIsLogTimeOpen(true)}>
                     <PlusCircle className="mr-2 h-4 w-4" />
