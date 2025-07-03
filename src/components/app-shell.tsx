@@ -24,6 +24,7 @@ import {
   Settings,
   Briefcase,
   Banknote,
+  Home,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +40,7 @@ import { Button } from "./ui/button";
 import { Footer } from "./footer";
 
 const navItems = [
+  { href: "/home", icon: Home, label: "Home" },
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/calendar", icon: Calendar, label: "Calendar" },
   { href: "/clients", icon: Users, label: "Clients" },
@@ -154,24 +156,20 @@ function NavItem({
 }
 
 function UserMenu({ isMobile = false }) {
-  const trigger = (
-    <Button variant="ghost" size="icon" className="rounded-full md:hidden">
-      <Avatar className="h-8 w-8">
-        <AvatarImage
-          src="https://placehold.co/100x100.png"
-          data-ai-hint="person user"
-          alt="User Avatar"
-        />
-        <AvatarFallback>AD</AvatarFallback>
-      </Avatar>
-    </Button>
-  );
-
   const dropdownMenu = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         {isMobile ? (
-          trigger
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage
+                src="https://placehold.co/100x100.png"
+                data-ai-hint="person user"
+                alt="User Avatar"
+              />
+              <AvatarFallback>AD</AvatarFallback>
+            </Avatar>
+          </Button>
         ) : (
           <SidebarMenuButton className="h-auto group-data-[collapsible=icon]:p-2">
             <Avatar className="h-8 w-8">
@@ -209,7 +207,7 @@ function UserMenu({ isMobile = false }) {
   if (isMobile) {
     return dropdownMenu;
   }
-
+  
   return (
     <SidebarMenuItem className="mt-auto">
       {dropdownMenu}
