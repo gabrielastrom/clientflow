@@ -204,7 +204,7 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
         </div>
-        <div className="grid grid-cols-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Weekly Agenda</CardTitle>
@@ -262,14 +262,12 @@ export default function DashboardPage() {
                     </ScrollArea>
                 </CardContent>
             </Card>
-        </div>
-        <div className="grid grid-cols-1">
           <Card>
             <CardHeader>
               <CardTitle>Team Performance</CardTitle>
               <CardDescription>Monthly stats for each team member.</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <CardContent className="grid gap-6 sm:grid-cols-2">
               {teamPerformance.map((member) => (
                 <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
                    <Avatar className="h-12 w-12">
