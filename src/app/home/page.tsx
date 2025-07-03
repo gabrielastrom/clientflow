@@ -361,7 +361,7 @@ export default function HomePage() {
                                     <Clock className="h-5 w-5" />
                                     <span>Hours Logged</span>
                                 </div>
-                                <span className="font-bold text-lg">{monthlyHours.toFixed(2)}h</span>
+                                <span className="font-bold text-lg">{monthlyHours.toFixed(1)}h</span>
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-muted-foreground">
