@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Pie, PieChart, Cell } from "recharts";
+import { Pie, PieChart, Cell, Label } from "recharts";
 
 import {
   ChartContainer,
@@ -19,15 +19,13 @@ const chartConfig = {
   revenue: {
     label: "Revenue",
   },
-  "Glamour Inc.": {
-    label: "Glamour Inc.",
-  },
-  "Peak Fitness": {
-    label: "Peak Fitness",
-  },
-  "The Coffee House": {
-    label: "The Coffee House",
-  },
+  ...chartData.reduce((acc, client) => {
+    acc[client.name as keyof typeof acc] = {
+      label: client.name,
+      color: client.fill,
+    };
+    return acc;
+  }, {} as { [key: string]: { label: string, color: string } }),
 } satisfies ChartConfig;
 
 export default function RevenueByClientChart() {
@@ -57,19 +55,39 @@ export default function RevenueByClientChart() {
             {chartData.map((entry) => (
               <Cell key={entry.name} fill={entry.fill} />
             ))}
+            <Label
+              content={({ viewBox }) => {
+                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                  return (
+                    <text
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      <tspan
+                        x={viewBox.cx}
+                        dy="-0.5em"
+                        className="text-2xl font-bold"
+                        fill="hsl(var(--foreground))"
+                      >
+                        {totalRevenue.toLocaleString()} kr
+                      </tspan>
+                      <tspan
+                        x={viewBox.cx}
+                        dy="1.2em"
+                        className="text-sm"
+                        fill="hsl(var(--muted-foreground))"
+                      >
+                        This Month
+                      </tspan>
+                    </text>
+                  );
+                }
+                return null;
+              }}
+            />
           </Pie>
-          <foreignObject
-              width="100%"
-              height="100%"
-              className="[&>div]:flex [&>div]:h-full [&>div]:w-full [&>div]:flex-col [&>div]:items-center [&>div]:justify-center [&>div]:text-center"
-          >
-              <div>
-                  <p className="text-2xl font-bold">
-                      {totalRevenue.toLocaleString()} kr
-                  </p>
-                  <p className="text-sm text-muted-foreground">This Month</p>
-              </div>
-          </foreignObject>
           <ChartLegend
               content={<ChartLegendContent nameKey="name" />}
               className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/3 [&>*]:justify-center"
