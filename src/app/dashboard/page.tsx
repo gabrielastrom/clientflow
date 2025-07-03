@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -9,20 +10,75 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
-import { financialData, appointments as allAppointments } from "@/lib/data";
+import { financialData, appointments as allAppointments, team, timeEntries, content, clients } from "@/lib/data";
 import { type Appointment } from "@/lib/types";
-import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp } from "lucide-react";
+import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock, Video } from "lucide-react";
 import FinancialChart from "./financial-chart";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+type TeamPerformanceData = {
+  id: string;
+  name: string;
+  role: string;
+  hoursThisMonth: number;
+  videosThisMonth: number;
+};
+
 
 export default function DashboardPage() {
   const [todaysAppointments, setTodaysAppointments] = React.useState<Appointment[]>([]);
+  const [newClientsThisQuarter, setNewClientsThisQuarter] = React.useState(0);
+  const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
 
   React.useEffect(() => {
     const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    const currentQuarter = Math.floor(currentMonth / 3);
+
+    // Calculate today's appointments
     const filteredAppointments = allAppointments.filter(
       (appt) => new Date(appt.date).toDateString() === today.toDateString()
     );
     setTodaysAppointments(filteredAppointments);
+
+    // Calculate new clients this quarter
+    const newClients = clients.filter(client => {
+      const joinDate = new Date(client.joinDate);
+      return joinDate.getFullYear() === currentYear && Math.floor(joinDate.getMonth() / 3) === currentQuarter;
+    }).length;
+    setNewClientsThisQuarter(newClients);
+
+    // Calculate team performance
+    const performanceData = team.map(member => {
+      const hoursThisMonth = timeEntries
+        .filter(entry => {
+          const entryDate = new Date(entry.date);
+          return entry.teamMember === member.name &&
+                 entryDate.getFullYear() === currentYear &&
+                 entryDate.getMonth() === currentMonth;
+        })
+        .reduce((total, entry) => total + entry.duration, 0);
+
+      const videosThisMonth = content
+        .filter(c => {
+          const deadlineDate = new Date(c.deadline);
+          return c.owner === member.name &&
+                 c.status === 'Done' &&
+                 deadlineDate.getFullYear() === currentYear &&
+                 deadlineDate.getMonth() === currentMonth;
+        })
+        .length;
+      
+      return {
+        id: member.id,
+        name: member.name,
+        role: member.role,
+        hoursThisMonth: hoursThisMonth,
+        videosThisMonth: videosThisMonth,
+      };
+    });
+    setTeamPerformance(performanceData);
   }, []);
 
   return (
@@ -34,7 +90,7 @@ export default function DashboardPage() {
             Welcome back! Here's a summary of your agency's performance.
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -83,6 +139,22 @@ export default function DashboardPage() {
               </p>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                New Clients (Quarter)
+              </CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                +{newClientsThisQuarter}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This quarter
+              </p>
+            </CardContent>
+          </Card>
         </div>
         <div className="grid gap-6 lg:grid-cols-5">
             <Card className="lg:col-span-3">
@@ -119,6 +191,38 @@ export default function DashboardPage() {
                     </ul>
                 </CardContent>
             </Card>
+        </div>
+        <div className="grid grid-cols-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Team Performance</CardTitle>
+              <CardDescription>Monthly stats for each team member.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {teamPerformance.map((member) => (
+                <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+                   <Avatar className="h-12 w-12">
+                    <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="person user" />
+                    <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-semibold">{member.name}</p>
+                    <p className="text-sm text-muted-foreground">{member.role}</p>
+                    <div className="flex items-center gap-4 mt-2 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{member.hoursThisMonth.toFixed(1)} hrs</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Video className="h-4 w-4 text-muted-foreground" />
+                        <span>{member.videosThisMonth} videos</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AppShell>
