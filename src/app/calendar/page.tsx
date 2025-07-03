@@ -105,28 +105,8 @@ export default function CalendarPage() {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-            <CardContent className="p-0">
-                <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    className="p-0"
-                    classNames={{
-                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 p-4",
-                        month: "space-y-4 flex-1",
-                        table: "w-full border-collapse space-y-1",
-                        head_row: "flex justify-around",
-                        row: "flex w-full mt-2 justify-around",
-                    }}
-                    components={{
-                      DayContent: DayContentWithDot,
-                    }}
-                />
-            </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
+      <div className="flex flex-col gap-6">
+        <Card>
             <CardHeader>
                 <CardTitle>
                 Events for {date ? date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'today'}
@@ -155,6 +135,26 @@ export default function CalendarPage() {
                 ) : (
                 <p className="text-center text-muted-foreground py-8">No events scheduled for this day.</p>
                 )}
+            </CardContent>
+        </Card>
+        <Card>
+            <CardContent className="p-0">
+                <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    className="w-full"
+                    classNames={{
+                        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0 p-4",
+                        month: "space-y-4 flex-1",
+                        table: "w-full border-collapse space-y-1",
+                        head_row: "flex justify-around",
+                        row: "flex w-full mt-2 justify-around",
+                    }}
+                    components={{
+                      DayContent: DayContentWithDot,
+                    }}
+                />
             </CardContent>
         </Card>
       </div>
