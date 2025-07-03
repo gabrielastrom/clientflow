@@ -203,7 +203,7 @@ export default function DashboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Weekly Agenda</CardTitle>
-                    <CardDescription>Your tasks and appointments for this week.</CardDescription>
+                    <CardDescription>What's going on at BrandGuys this week!</CardDescription>
                 </CardHeader>
                 <CardContent className="pr-0">
                     <ScrollArea className="h-[290px]">
@@ -299,3 +299,5 @@ export default function DashboardPage() {
     </AppShell>
   );
 }
+
+    
