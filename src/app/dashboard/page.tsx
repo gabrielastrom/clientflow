@@ -89,9 +89,6 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here's a summary of your agency's performance.
-          </p>
         </div>
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
           <Card>
