@@ -176,63 +176,6 @@ export default function DashboardPage() {
             </Card>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Weekly Agenda</CardTitle>
-                    <CardDescription>What's going on at BrandGuys this week!</CardDescription>
-                </CardHeader>
-                <CardContent className="pr-0">
-                    <ScrollArea className="h-[290px]">
-                      <div className="space-y-6 pr-6">
-                        {weekDates.map((day) => {
-                          const dayAppointments = weeklyAppointments.filter((appt) =>
-                            isSameDay(new Date(appt.date), day)
-                          );
-
-                          if (dayAppointments.length === 0) {
-                            return null;
-                          }
-
-                          return (
-                            <div key={day.toString()}>
-                              <h3 className="font-semibold text-sm mb-3 sticky top-0 bg-card py-2 z-10">
-                                {format(day, 'EEEE, MMM d')}
-                              </h3>
-                              <div className="space-y-4">
-                                {dayAppointments.map((appt) => (
-                                  <div key={appt.id} className="flex items-start gap-4 text-sm">
-                                    <div className="flex flex-col items-center w-16 flex-shrink-0">
-                                      <p className="font-semibold text-primary">{format(new Date(appt.date), 'HH:mm')}</p>
-                                      <Badge
-                                        variant={appt.type === "Deadline" ? "destructive" : "secondary"}
-                                        className="mt-1"
-                                      >
-                                        {appt.type}
-                                      </Badge>
-                                    </div>
-                                    <div className="border-l pl-4 flex-1">
-                                      <p className="font-medium">{appt.title}</p>
-                                      {appt.clientId && (
-                                        <p className="text-xs text-muted-foreground">
-                                            {clients.find(c => c.id === appt.clientId)?.name}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                        {weeklyAppointments.length === 0 && (
-                          <div className="flex h-full min-h-[290px] items-center justify-center text-muted-foreground">
-                              <p>No appointments for this week.</p>
-                          </div>
-                        )}
-                      </div>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
           <Card>
             <CardHeader>
               <CardTitle>Team Performance</CardTitle>
@@ -258,6 +201,63 @@ export default function DashboardPage() {
                 </div>
               ))}
             </CardContent>
+          </Card>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Weekly Agenda</CardTitle>
+                  <CardDescription>What's going on at BrandGuys this week!</CardDescription>
+              </CardHeader>
+              <CardContent className="pr-0">
+                  <ScrollArea className="h-[290px]">
+                    <div className="space-y-6 pr-6">
+                      {weekDates.map((day) => {
+                        const dayAppointments = weeklyAppointments.filter((appt) =>
+                          isSameDay(new Date(appt.date), day)
+                        );
+
+                        if (dayAppointments.length === 0) {
+                          return null;
+                        }
+
+                        return (
+                          <div key={day.toString()}>
+                            <h3 className="font-semibold text-sm mb-3 sticky top-0 bg-card py-2 z-10">
+                              {format(day, 'EEEE, MMM d')}
+                            </h3>
+                            <div className="space-y-4">
+                              {dayAppointments.map((appt) => (
+                                <div key={appt.id} className="flex items-start gap-4 text-sm">
+                                  <div className="flex flex-col items-center w-16 flex-shrink-0">
+                                    <p className="font-semibold text-primary">{format(new Date(appt.date), 'HH:mm')}</p>
+                                    <Badge
+                                      variant={appt.type === "Deadline" ? "destructive" : "secondary"}
+                                      className="mt-1"
+                                    >
+                                      {appt.type}
+                                    </Badge>
+                                  </div>
+                                  <div className="border-l pl-4 flex-1">
+                                    <p className="font-medium">{appt.title}</p>
+                                    {appt.clientId && (
+                                      <p className="text-xs text-muted-foreground">
+                                          {clients.find(c => c.id === appt.clientId)?.name}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {weeklyAppointments.length === 0 && (
+                        <div className="flex h-full min-h-[290px] items-center justify-center text-muted-foreground">
+                            <p>No appointments for this week.</p>
+                        </div>
+                      )}
+                    </div>
+                  </ScrollArea>
+              </CardContent>
           </Card>
         </div>
         <div className="grid grid-cols-1">
