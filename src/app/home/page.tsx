@@ -242,24 +242,24 @@ export default function HomePage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Welcome back, {CURRENT_USER.split(' ')[0]}!</h1>
                 </div>
-                <Button onClick={() => setIsLogTimeOpen(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Log Time
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => setIsLogTimeOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Log Time
+                    </Button>
+                    <Button onClick={() => setIsAddTaskOpen(true)}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Task
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle>My Tasks</CardTitle>
-                                <CardDescription>Content assigned to you with deadlines this week and month.</CardDescription>
-                            </div>
-                            <Button onClick={() => setIsAddTaskOpen(true)}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Task
-                            </Button>
+                        <CardHeader>
+                            <CardTitle>My Tasks</CardTitle>
+                            <CardDescription>Content assigned to you with deadlines this week and month.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Tabs defaultValue="week">
