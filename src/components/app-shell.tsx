@@ -172,8 +172,7 @@ function UserMenu({ isMobile = false }) {
         </SidebarMenuButton>
     );
 
-  return (
-    <SidebarMenuItem className={isMobile ? '' : 'mt-auto'}>
+    const dropdownMenu = (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 {trigger}
@@ -187,6 +186,15 @@ function UserMenu({ isMobile = false }) {
                 <DropdownMenuItem>Log out</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+    );
+
+    if (isMobile) {
+        return dropdownMenu;
+    }
+
+  return (
+    <SidebarMenuItem className="mt-auto">
+        {dropdownMenu}
     </SidebarMenuItem>
   );
 }
