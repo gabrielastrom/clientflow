@@ -71,10 +71,18 @@ export default function TrackingPage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    // Set the default date only on the client
+    // Set the default date and month only on the client
     const now = new Date();
     setDefaultDate(now.toISOString().split("T")[0]);
-    setSelectedMonth(now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2));
+
+    if (initialTimeEntries.length > 0) {
+      // Sort to find the latest date. Assumes YYYY-MM-DD format is sortable as string.
+      const latestDate = [...initialTimeEntries].sort((a, b) => b.date.localeCompare(a.date))[0].date;
+      setSelectedMonth(latestDate.substring(0, 7)); // YYYY-MM
+    } else {
+      // If no entries, default to current month
+      setSelectedMonth(now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2));
+    }
   }, []);
 
   React.useEffect(() => {
