@@ -174,7 +174,7 @@ export default function CalendarPage() {
         </Button>
       </div>
       <div className="flex flex-col gap-6">
-        <Card>
+        <Card className="w-full">
             <CardHeader>
                 <CardTitle>
                 Events for {date ? date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'today'}
@@ -264,7 +264,7 @@ export default function CalendarPage() {
               )}
             </CardContent>
         </Card>
-        <Card>
+        <Card className="w-full">
             <CardContent className="p-0">
                 <Calendar
                     mode="single"
