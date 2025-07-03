@@ -1,0 +1,174 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarFooter,
+  SidebarTrigger,
+  SidebarInset,
+} from "@/components/ui/sidebar";
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  Lightbulb,
+  Clock,
+  Settings,
+} from "lucide-react";
+import { Logo } from "@/components/logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "./ui/button";
+
+const navItems = [
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/calendar", icon: Calendar, label: "Calendar" },
+  { href: "/clients", icon: Users, label: "Clients" },
+  { href: "/content", icon: Lightbulb, label: "Content Planner" },
+  { href: "/tracking", icon: Clock, label: "Time Tracking" },
+];
+
+export function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen">
+        <Sidebar className="border-r bg-card">
+          <SidebarHeader className="p-4">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2"
+            >
+              <Logo />
+              <span className="font-bold text-lg text-foreground group-data-[collapsible=icon]:hidden">
+                ClientFlow
+              </span>
+            </Link>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <NavItem key={item.href} {...item} />
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+            <SidebarMenu>
+              <NavItem href="/settings" icon={Settings} label="Settings" />
+              <UserMenu />
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+        <SidebarInset>
+            <header className="sticky top-0 z-10 flex items-center h-14 px-4 border-b md:hidden bg-background/95 backdrop-blur-sm">
+                <SidebarTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                     <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-6 w-6"
+                    >
+                      <line x1="4" x2="20" y1="6" y2="6" />
+                      <line x1="4" x2="20" y1="12" y2="12" />
+                      <line x1="4" x2="20" y1="18" y2="18" />
+                    </svg>
+                    <span className="sr-only">Toggle Sidebar</span>
+                  </Button>
+                </SidebarTrigger>
+                <div className="ml-auto">
+                    <UserMenu isMobile />
+                </div>
+            </header>
+            <main className="flex-1 p-4 sm:p-6 lg:p-8">
+                {children}
+            </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+}
+
+function NavItem({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+}) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
+
+  return (
+    <SidebarMenuItem>
+      <Link href={href}>
+        <SidebarMenuButton tooltip={label} isActive={isActive}>
+          <Icon />
+          <span>{label}</span>
+        </SidebarMenuButton>
+      </Link>
+    </SidebarMenuItem>
+  );
+}
+
+function UserMenu({ isMobile = false }) {
+    const trigger = isMobile ? (
+        <Button variant="ghost" size="icon" className="rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person user" alt="User Avatar" />
+              <AvatarFallback>AD</AvatarFallback>
+            </Avatar>
+        </Button>
+    ) : (
+        <SidebarMenuButton className="h-auto group-data-[collapsible=icon]:p-2">
+            <Avatar className="h-8 w-8">
+                <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person user" alt="User Avatar" />
+                <AvatarFallback>AD</AvatarFallback>
+            </Avatar>
+            <div className="group-data-[collapsible=icon]:hidden text-left">
+                <p className="font-medium text-sm">Alex Doe</p>
+                <p className="text-xs text-muted-foreground">alex@clientflow.com</p>
+            </div>
+        </SidebarMenuButton>
+    );
+
+  return (
+    <SidebarMenuItem className={isMobile ? '' : 'mt-auto'}>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                {trigger}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side={isMobile ? 'bottom' : 'right'} align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Log out</DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    </SidebarMenuItem>
+  );
+}
