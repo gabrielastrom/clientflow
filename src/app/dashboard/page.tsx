@@ -11,7 +11,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { financialData, appointments as allAppointments, team, timeEntries, content, clients } from "@/lib/data";
 import { type Appointment } from "@/lib/types";
-import { CheckCircle2, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -108,7 +108,6 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 This Month's Revenue
               </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -124,7 +123,6 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 This Month's Expenses
               </CardTitle>
-              <ArrowDown className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -140,7 +138,6 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 This Month's Profit
               </CardTitle>
-              <ArrowUp className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -156,7 +153,6 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 New Clients (Quarter)
               </CardTitle>
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -172,7 +168,6 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 Content Completion
               </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
