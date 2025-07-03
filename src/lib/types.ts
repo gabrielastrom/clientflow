@@ -6,6 +6,7 @@ export type Client = {
   phone: string;
   status: 'Active' | 'Inactive' | 'Lead';
   joinDate: string;
+  monthlyVideos: number;
 };
 
 export type Appointment = {

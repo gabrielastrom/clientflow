@@ -120,6 +120,7 @@ export default function ClientsPage() {
       phone: formData.get("phone") as string,
       status: formData.get("status") as Client["status"],
       joinDate: new Date().toLocaleDateString('en-CA'),
+      monthlyVideos: parseInt(formData.get("monthlyVideos") as string, 10) || 0,
     };
     setClients((prevClients) => [newClient, ...prevClients]);
     setIsAddOpen(false);
@@ -138,6 +139,7 @@ export default function ClientsPage() {
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       status: formData.get("status") as Client["status"],
+      monthlyVideos: parseInt(formData.get("monthlyVideos") as string, 10) || 0,
     };
 
     setClients(
@@ -208,6 +210,12 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('monthlyVideos')}>
+                    Monthly Videos
+                    {getSortIcon('monthlyVideos')}
+                  </Button>
+                </TableHead>
+                <TableHead>
                   <Button variant="ghost" onClick={() => requestSort('status')}>
                     Status
                     {getSortIcon('status')}
@@ -235,6 +243,7 @@ export default function ClientsPage() {
                   <TableCell className="hidden md:table-cell">
                     {client.phone}
                   </TableCell>
+                  <TableCell>{client.monthlyVideos}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -334,6 +343,10 @@ export default function ClientsPage() {
                   <Input id="phone" name="phone" className="col-span-3" required/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="monthlyVideos" className="text-right">Monthly Videos</Label>
+                  <Input id="monthlyVideos" name="monthlyVideos" type="number" defaultValue={0} className="col-span-3" required/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">Status</Label>
                   <Select name="status" defaultValue="Lead">
                     <SelectTrigger className="col-span-3">
@@ -386,6 +399,12 @@ export default function ClientsPage() {
                 <Label className="text-muted-foreground">Phone</Label>
                 <p className="col-span-2 font-medium">
                   {selectedClient.phone}
+                </p>
+              </div>
+              <div className="grid grid-cols-3 items-center gap-2">
+                <Label className="text-muted-foreground">Monthly Videos</Label>
+                <p className="col-span-2 font-medium">
+                  {selectedClient.monthlyVideos}
                 </p>
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
@@ -449,6 +468,10 @@ export default function ClientsPage() {
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="phone" className="text-right">Phone</Label>
                   <Input id="phone" name="phone" defaultValue={selectedClient.phone} className="col-span-3"/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="monthlyVideos" className="text-right">Monthly Videos</Label>
+                  <Input id="monthlyVideos" name="monthlyVideos" type="number" defaultValue={selectedClient.monthlyVideos} className="col-span-3" required/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="status" className="text-right">Status</Label>

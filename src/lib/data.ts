@@ -1,11 +1,11 @@
 import type { Client, Appointment, TimeEntry, TeamMember, Revenue, Content } from './types';
 
 export const clients: Client[] = [
-  { id: '1', name: 'Glamour Inc.', contactPerson: 'Jessica Day', email: 'jessica.day@glamour.com', phone: '555-0101', status: 'Active', joinDate: '2023-01-15' },
-  { id: '2', name: 'Peak Fitness', contactPerson: 'Mike Johnson', email: 'mike.j@peakfitness.com', phone: '555-0102', status: 'Active', joinDate: '2023-03-22' },
-  { id: '3', name: 'The Coffee House', contactPerson: 'Sarah Lee', email: 'sarah.l@coffeehouse.com', phone: '555-0103', status: 'Inactive', joinDate: '2022-11-10' },
-  { id: '4', name: 'Innovate Tech', contactPerson: 'David Chen', email: 'david.c@innovate.tech', phone: '555-0104', status: 'Lead', joinDate: '2024-05-01' },
-  { id: '5', name: 'Artisan Bakes', contactPerson: 'Emily White', email: 'emily.w@artisanbakes.com', phone: '555-0105', status: 'Active', joinDate: '2023-08-01' },
+  { id: '1', name: 'Glamour Inc.', contactPerson: 'Jessica Day', email: 'jessica.day@glamour.com', phone: '555-0101', status: 'Active', joinDate: '2023-01-15', monthlyVideos: 5 },
+  { id: '2', name: 'Peak Fitness', contactPerson: 'Mike Johnson', email: 'mike.j@peakfitness.com', phone: '555-0102', status: 'Active', joinDate: '2023-03-22', monthlyVideos: 10 },
+  { id: '3', name: 'The Coffee House', contactPerson: 'Sarah Lee', email: 'sarah.l@coffeehouse.com', phone: '555-0103', status: 'Inactive', joinDate: '2022-11-10', monthlyVideos: 0 },
+  { id: '4', name: 'Innovate Tech', contactPerson: 'David Chen', email: 'david.c@innovate.tech', phone: '555-0104', status: 'Lead', joinDate: '2024-05-01', monthlyVideos: 8 },
+  { id: '5', name: 'Artisan Bakes', contactPerson: 'Emily White', email: 'emily.w@artisanbakes.com', phone: '555-0105', status: 'Active', joinDate: '2023-08-01', monthlyVideos: 3 },
 ];
 
 export const team: TeamMember[] = [
