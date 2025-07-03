@@ -206,7 +206,7 @@ export default function HomePage() {
   return (
     <AppShell>
         <div className="flex flex-col gap-8">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:items-center">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Welcome back, {CURRENT_USER.split(' ')[0]}!</h1>
                     <p className="text-muted-foreground">Here's what's on your plate.</p>
@@ -501,5 +501,6 @@ export default function HomePage() {
     </AppShell>
   );
 }
+    
 
     
