@@ -61,14 +61,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
 
-type SortableContentKeys = keyof Omit<Content, 'id' | 'link'>;
+type SortableContentKeys = keyof Omit<Content, 'id' | 'link' | 'description'>;
 
 export default function ContentPage() {
   const [contentList, setContentList] = React.useState<Content[]>(initialContent);
   const [selectedContent, setSelectedContent] = React.useState<Content | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isViewOpen, setIsViewOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableContentKeys; direction: 'ascending' | 'descending' } | null>(null);
 
@@ -137,6 +139,7 @@ export default function ContentPage() {
       deadline: formData.get("deadline") as string,
       owner: formData.get("owner") as string,
       link: formData.get("link") as string || undefined,
+      description: formData.get("description") as string || undefined,
     };
     setContentList((prev) => [newContent, ...prev]);
     setIsAddOpen(false);
@@ -157,6 +160,7 @@ export default function ContentPage() {
       deadline: formData.get("deadline") as string,
       owner: formData.get("owner") as string,
       link: formData.get("link") as string || undefined,
+      description: formData.get("description") as string || undefined,
     };
 
     setContentList(
@@ -276,6 +280,9 @@ export default function ContentPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                         <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsViewOpen(true); }}>
+                          View Details
+                        </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsEditOpen(true); }}>
                           Edit
                         </DropdownMenuItem>
@@ -294,7 +301,7 @@ export default function ContentPage() {
       </Card>
       
       {/* Add/Edit Dialogs */}
-      <Dialog open={isAddOpen || isEditOpen} onOpenChange={isAddOpen ? setIsAddOpen : setIsEditOpen}>
+      <Dialog open={isAddOpen || isEditOpen} onOpenChange={(open) => { isAddOpen ? setIsAddOpen(open) : setIsEditOpen(open); if (!open) setSelectedContent(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{isAddOpen ? "Add New Content" : "Edit Content"}</DialogTitle>
@@ -370,6 +377,10 @@ export default function ContentPage() {
                 <Label htmlFor="link" className="text-right">Link</Label>
                 <Input id="link" name="link" defaultValue={selectedContent?.link} className="col-span-3" />
               </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="description" className="text-right pt-2">Description</Label>
+                <Textarea id="description" name="description" defaultValue={selectedContent?.description} className="col-span-3" placeholder="A short description of the content..." />
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
@@ -396,6 +407,62 @@ export default function ContentPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* View Content Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+            <DialogTitle>{selectedContent?.title}</DialogTitle>
+            <DialogDescription>
+                {selectedContent?.platform} content for {selectedContent?.client}
+            </DialogDescription>
+            </DialogHeader>
+            {selectedContent && (
+            <div className="grid gap-4 py-4 text-sm">
+                <div className="grid grid-cols-3 items-center gap-2">
+                    <Label className="text-muted-foreground">Status</Label>
+                    <div className="col-span-2">
+                        <Badge variant={'outline'} className={cn(getStatusBadgeClassName(selectedContent.status))}>
+                            {selectedContent.status}
+                        </Badge>
+                    </div>
+                </div>
+                <div className="grid grid-cols-3 items-center gap-2">
+                    <Label className="text-muted-foreground">Deadline</Label>
+                    <p className="col-span-2 font-medium">{selectedContent.deadline}</p>
+                </div>
+                <div className="grid grid-cols-3 items-center gap-2">
+                    <Label className="text-muted-foreground">Owner</Label>
+                    <p className="col-span-2 font-medium">{selectedContent.owner}</p>
+                </div>
+                {selectedContent.description && (
+                    <div className="grid grid-cols-3 items-start gap-2">
+                        <Label className="text-muted-foreground">Description</Label>
+                        <p className="col-span-2 font-medium whitespace-pre-wrap">{selectedContent.description}</p>
+                    </div>
+                )}
+                {selectedContent.link && (
+                    <div className="grid grid-cols-3 items-center gap-2">
+                        <Label className="text-muted-foreground">Link</Label>
+                        <Button asChild variant="link" size="sm" className="p-0 h-auto justify-start col-span-2">
+                            <Link href={selectedContent.link} target="_blank" className="truncate">
+                                {selectedContent.link}
+                                <ExternalLink className="h-3 w-3 ml-1.5" />
+                            </Link>
+                        </Button>
+                    </div>
+                )}
+            </div>
+            )}
+            <DialogFooter>
+            <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                Close
+                </Button>
+            </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

@@ -41,12 +41,12 @@ export const revenues: Revenue[] = [
 ];
 
 export const content: Content[] = [
-  { id: '1', title: 'Summer Campaign Launch Video', client: 'Glamour Inc.', status: 'In Progress', platform: 'Instagram', deadline: '2024-08-15', owner: 'Casey Jordan' },
-  { id: '2', title: '10 Healthy Breakfast Ideas', client: 'Peak Fitness', status: 'To Do', platform: 'TikTok', deadline: '2024-08-10', owner: 'Alex Ray', link: 'https://example.com/draft1' },
-  { id: '3', title: 'Behind the Scenes at the Roastery', client: 'The Coffee House', status: 'Done', platform: 'Instagram', deadline: '2024-07-28', owner: 'Taylor Morgan', link: 'https://instagram.com/p/12345' },
-  { id: '4', title: 'New Feature Announcement', client: 'Innovate Tech', status: 'In Review', platform: 'X', deadline: '2024-08-05', owner: 'Casey Jordan' },
-  { id: '5', title: 'Weekly Special: Croissant-Muffin', client: 'Artisan Bakes', status: 'In Progress', platform: 'Facebook', deadline: '2024-08-01', owner: 'Alex Ray', link: 'https://example.com/draft2' },
-  { id: '6', title: 'Q3 Results Infographic', client: 'Glamour Inc.', status: 'To Do', platform: 'X', deadline: '2024-09-01', owner: 'Taylor Morgan' },
+  { id: '1', title: 'Summer Campaign Launch Video', client: 'Glamour Inc.', status: 'In Progress', platform: 'Instagram', deadline: '2024-08-15', owner: 'Casey Jordan', description: 'A vibrant and energetic video showcasing the new summer collection. Aim for a 30-second reel with trending audio.' },
+  { id: '2', title: '10 Healthy Breakfast Ideas', client: 'Peak Fitness', status: 'To Do', platform: 'TikTok', deadline: '2024-08-10', owner: 'Alex Ray', link: 'https://example.com/draft1', description: 'Quick-cut video series demonstrating 10 easy and healthy breakfast recipes. Each clip should be 3-5 seconds long.' },
+  { id: '3', title: 'Behind the Scenes at the Roastery', client: 'The Coffee House', status: 'Done', platform: 'Instagram', deadline: '2024-07-28', owner: 'Taylor Morgan', link: 'https://instagram.com/p/12345', description: 'A short documentary-style video showing the coffee roasting process and interviews with the staff.' },
+  { id: '4', title: 'New Feature Announcement', client: 'Innovate Tech', status: 'In Review', platform: 'X', deadline: '2024-08-05', owner: 'Casey Jordan', description: 'A concise and impactful graphic announcing the latest software update. Highlight the top 3 new features.' },
+  { id: '5', title: 'Weekly Special: Croissant-Muffin', client: 'Artisan Bakes', status: 'In Progress', platform: 'Facebook', deadline: '2024-08-01', owner: 'Alex Ray', link: 'https://example.com/draft2', description: 'A delicious-looking carousel post with high-quality photos of the new croissant-muffin hybrid. Include a call-to-action to visit the store.' },
+  { id: '6', title: 'Q3 Results Infographic', client: 'Glamour Inc.', status: 'To Do', platform: 'X', deadline: '2024-09-01', owner: 'Taylor Morgan', description: 'An easy-to-read infographic summarizing the key success metrics from the third quarter. Use brand colors and clear data visualizations.' },
 ];
 
 export const financialData = {

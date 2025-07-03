@@ -76,6 +76,8 @@ export default function ClientsPage() {
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: keyof Client; direction: 'ascending' | 'descending' } | null>(null);
   const [clientNotes, setClientNotes] = React.useState<Record<string, string>>({});
+  const [selectedContentItem, setSelectedContentItem] = React.useState<Content | null>(null);
+  const [isContentViewOpen, setIsContentViewOpen] = React.useState(false);
 
   const { toast } = useToast();
 
@@ -418,6 +420,7 @@ export default function ClientsPage() {
                                 <TableHead>Deadline</TableHead>
                                 <TableHead>Owner</TableHead>
                                 <TableHead>Link</TableHead>
+                                <TableHead><span className="sr-only">Actions</span></TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -442,6 +445,31 @@ export default function ClientsPage() {
                                     ) : (
                                       <span className="text-muted-foreground">-</span>
                                     )}
+                                  </TableCell>
+                                  <TableCell>
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button
+                                          aria-haspopup="true"
+                                          size="icon"
+                                          variant="ghost"
+                                        >
+                                          <MoreHorizontal className="h-4 w-4" />
+                                          <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem
+                                          onSelect={() => {
+                                            setSelectedContentItem(item);
+                                            setIsContentViewOpen(true);
+                                          }}
+                                        >
+                                          View Details
+                                        </DropdownMenuItem>
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -750,6 +778,62 @@ export default function ClientsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* View Content Dialog */}
+      <Dialog open={isContentViewOpen} onOpenChange={setIsContentViewOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+            <DialogTitle>{selectedContentItem?.title}</DialogTitle>
+            <DialogDescription>
+                {selectedContentItem?.platform} content for {selectedContentItem?.client}
+            </DialogDescription>
+            </DialogHeader>
+            {selectedContentItem && (
+            <div className="grid gap-4 py-4 text-sm">
+                <div className="grid grid-cols-3 items-center gap-2">
+                    <Label className="text-muted-foreground">Status</Label>
+                    <div className="col-span-2">
+                        <Badge variant={'outline'} className={cn(getStatusBadgeClassName(selectedContentItem.status))}>
+                            {selectedContentItem.status}
+                        </Badge>
+                    </div>
+                </div>
+                <div className="grid grid-cols-3 items-center gap-2">
+                    <Label className="text-muted-foreground">Deadline</Label>
+                    <p className="col-span-2 font-medium">{selectedContentItem.deadline}</p>
+                </div>
+                <div className="grid grid-cols-3 items-center gap-2">
+                    <Label className="text-muted-foreground">Owner</Label>
+                    <p className="col-span-2 font-medium">{selectedContentItem.owner}</p>
+                </div>
+                {selectedContentItem.description && (
+                    <div className="grid grid-cols-3 items-start gap-2">
+                        <Label className="text-muted-foreground">Description</Label>
+                        <p className="col-span-2 font-medium whitespace-pre-wrap">{selectedContentItem.description}</p>
+                    </div>
+                )}
+                {selectedContentItem.link && (
+                    <div className="grid grid-cols-3 items-center gap-2">
+                        <Label className="text-muted-foreground">Link</Label>
+                        <Button asChild variant="link" size="sm" className="p-0 h-auto justify-start col-span-2">
+                            <Link href={selectedContentItem.link} target="_blank" className="truncate">
+                                {selectedContentItem.link}
+                                <ExternalLink className="h-3 w-3 ml-1.5" />
+                            </Link>
+                        </Button>
+                    </div>
+                )}
+            </div>
+            )}
+            <DialogFooter>
+            <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                Close
+                </Button>
+            </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

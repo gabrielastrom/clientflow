@@ -55,4 +55,5 @@ export type Content = {
   deadline: string;
   owner: string;
   link?: string;
+  description?: string;
 };
