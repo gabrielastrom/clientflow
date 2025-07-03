@@ -48,19 +48,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="flex min-h-screen">
         <Sidebar className="border-r bg-card">
-          <SidebarHeader className="p-4 flex flex-row items-center justify-between">
+          <SidebarHeader className="p-4 flex flex-row items-center justify-between group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center">
             <Link
               href="/dashboard"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 group-data-[collapsible=icon]:hidden"
             >
               <Logo />
-              <span className="font-bold text-lg text-foreground group-data-[collapsible=icon]:hidden">
+              <span className="font-bold text-lg text-foreground">
                 ClientFlow
               </span>
             </Link>
             <SidebarTrigger className="hidden md:flex" />
           </SidebarHeader>
-          <SidebarContent className="flex flex-col justify-center">
+          <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => (
                 <NavItem key={item.href} {...item} />
