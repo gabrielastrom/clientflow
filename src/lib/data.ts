@@ -23,6 +23,8 @@ export const timeEntries: TimeEntry[] = [
     { id: '4', date: '2024-07-20', teamMember: 'Taylor Morgan', client: 'Glamour Inc.', task: 'Client Meeting', duration: '1h 0m' },
 ];
 
+export const teamMembers: string[] = ['Alex Ray', 'Casey Jordan', 'Taylor Morgan', 'Alex Doe'];
+
 export const financialData = {
     monthly: {
         revenue: 12500,
