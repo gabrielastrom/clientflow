@@ -45,12 +45,14 @@ import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'l
 const CURRENT_USER = "Alex Ray";
 
 export default function HomePage() {
+  const [content, setContent] = React.useState<Content[]>(allContent);
   const [weeklyTasks, setWeeklyTasks] = React.useState<Content[]>([]);
   const [monthlyTasks, setMonthlyTasks] = React.useState<Content[]>([]);
   const [monthlyProgress, setMonthlyProgress] = React.useState(0);
   const [completedCount, setCompletedCount] = React.useState(0);
   const [totalCount, setTotalCount] = React.useState(0);
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
+  const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>(initialTimeEntries);
   const [defaultDate, setDefaultDate] = React.useState("");
   const [monthlyHours, setMonthlyHours] = React.useState(0);
@@ -68,7 +70,7 @@ export default function HomePage() {
     const startOfThisMonth = startOfMonth(today);
     const endOfThisMonth = endOfMonth(today);
 
-    const userContent = allContent.filter(item => item.owner === CURRENT_USER);
+    const userContent = content.filter(item => item.owner === CURRENT_USER);
     
     const weekTasks = userContent.filter(item => {
       const deadline = new Date(item.deadline);
@@ -111,7 +113,7 @@ export default function HomePage() {
     setMonthlyHours(totalHours);
     setMonthlySalary(salary);
 
-  }, [timeEntries]);
+  }, [timeEntries, content]);
 
   const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
     switch (status) {
@@ -147,6 +149,24 @@ export default function HomePage() {
       title: "Time Logged",
       description: "Your time entry has been successfully saved.",
     });
+  };
+
+  const handleAddTaskSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const newContent: Content = {
+      id: `${Date.now()}`,
+      title: formData.get("title") as string,
+      client: formData.get("client") as string,
+      status: "To Do",
+      platform: formData.get("platform") as Content["platform"],
+      deadline: formData.get("deadline") as string,
+      owner: CURRENT_USER,
+      description: formData.get("description") as string || undefined,
+    };
+    setContent((prev) => [newContent, ...prev]);
+    setIsAddTaskOpen(false);
+    toast({ title: "Success", description: "Task added successfully." });
   };
 
   const TaskList = ({ tasks }: { tasks: Content[] }) => {
@@ -187,9 +207,15 @@ export default function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>My Tasks</CardTitle>
-                            <CardDescription>Content assigned to you with deadlines this week and month.</CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>My Tasks</CardTitle>
+                                <CardDescription>Content assigned to you with deadlines this week and month.</CardDescription>
+                            </div>
+                            <Button onClick={() => setIsAddTaskOpen(true)}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Task
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <Tabs defaultValue="week">
@@ -338,6 +364,65 @@ export default function HomePage() {
                   </Button>
                 </DialogClose>
                 <Button type="submit">Log Time</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Task Dialog */}
+        <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Task</DialogTitle>
+              <DialogDescription>
+                Fill in the details for your new task. It will be assigned to you.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleAddTaskSubmit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">Title</Label>
+                  <Input id="title" name="title" className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="client" className="text-right">Client</Label>
+                  <Select name="client">
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="platform" className="text-right">Platform</Label>
+                    <Select name="platform" defaultValue="Instagram">
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a platform" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Instagram">Instagram</SelectItem>
+                        <SelectItem value="TikTok">TikTok</SelectItem>
+                        <SelectItem value="X">X</SelectItem>
+                        <SelectItem value="Facebook">Facebook</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="deadline" className="text-right">Deadline</Label>
+                  <Input id="deadline" name="deadline" type="date" defaultValue={defaultDate} className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="description" className="text-right pt-2">Description</Label>
+                  <Textarea id="description" name="description" className="col-span-3" />
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                <Button type="submit">Add Task</Button>
               </DialogFooter>
             </form>
           </DialogContent>
