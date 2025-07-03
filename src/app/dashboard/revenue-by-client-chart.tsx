@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Pie, PieChart } from "recharts";
+import { Pie, PieChart, Cell } from "recharts";
 
 import {
   ChartContainer,
@@ -55,7 +55,11 @@ export default function RevenueByClientChart() {
             nameKey="name"
             innerRadius="60%"
             strokeWidth={5}
+            stroke="hsl(var(--background))"
           >
+            {chartData.map((entry) => (
+              <Cell key={entry.name} fill={entry.fill} />
+            ))}
           </Pie>
           <foreignObject
               width="100%"
