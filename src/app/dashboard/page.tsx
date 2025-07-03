@@ -59,9 +59,9 @@ export default function DashboardPage() {
                deadlineDate.getMonth() === currentMonth;
     });
     const doneContentThisMonth = contentThisMonth.filter(c => c.status === 'Done').length;
-    const totalContentThisMonth = contentThisMonth.length;
+    const totalMonthlyVideos = clients.reduce((sum, client) => sum + client.monthlyVideos, 0);
     setDoneContentCount(doneContentThisMonth);
-    setTotalContentCount(totalContentThisMonth);
+    setTotalContentCount(totalMonthlyVideos);
 
     // Calculate team performance (hours per member)
     const performanceData = team.map(member => {
