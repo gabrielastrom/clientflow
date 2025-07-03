@@ -22,7 +22,7 @@ import {
 import { content as initialContent, clients, teamMembers } from "@/lib/data";
 import { type Content } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { ExternalLink, PlusCircle, MoreHorizontal } from "lucide-react";
+import { ExternalLink, PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -62,13 +62,53 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
+type SortableContentKeys = keyof Omit<Content, 'id' | 'link'>;
+
 export default function ContentPage() {
   const [contentList, setContentList] = React.useState<Content[]>(initialContent);
   const [selectedContent, setSelectedContent] = React.useState<Content | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [sortConfig, setSortConfig] = React.useState<{ key: SortableContentKeys; direction: 'ascending' | 'descending' } | null>(null);
+
   const { toast } = useToast();
+
+  const sortedContent = React.useMemo(() => {
+    let sortableItems = [...contentList];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        if (aValue! < bValue!) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue! > bValue!) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [contentList, sortConfig]);
+
+  const requestSort = (key: SortableContentKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableContentKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUp className="ml-2 h-4 w-4 text-primary" />;
+    }
+    return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+  };
 
   const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
     switch (status) {
@@ -162,18 +202,48 @@ export default function ContentPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Platform</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead>Owner</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('title')}>
+                    Title
+                    {getSortIcon('title')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('client')}>
+                    Client
+                    {getSortIcon('client')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('status')}>
+                    Status
+                    {getSortIcon('status')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('platform')}>
+                    Platform
+                    {getSortIcon('platform')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('deadline')}>
+                    Deadline
+                    {getSortIcon('deadline')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('owner')}>
+                    Owner
+                    {getSortIcon('owner')}
+                  </Button>
+                </TableHead>
                 <TableHead>Link</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {contentList.map((item) => (
+              {sortedContent.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.title}</TableCell>
                   <TableCell>{item.client}</TableCell>

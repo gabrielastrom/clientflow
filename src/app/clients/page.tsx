@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { clients as initialClients } from "@/lib/data";
 import { type Client } from "@/lib/types";
-import { PlusCircle, MoreHorizontal } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,8 +69,45 @@ export default function ClientsPage() {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
+  const [sortConfig, setSortConfig] = React.useState<{ key: keyof Client; direction: 'ascending' | 'descending' } | null>(null);
 
   const { toast } = useToast();
+
+  const sortedClients = React.useMemo(() => {
+    let sortableItems = [...clients];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [clients, sortConfig]);
+
+  const requestSort = (key: keyof Client) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: keyof Client) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUp className="ml-2 h-4 w-4 text-primary" />;
+    }
+    return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+  };
 
   const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -146,13 +183,41 @@ export default function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Client Name</TableHead>
-                <TableHead>Contact Person</TableHead>
-                <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="hidden md:table-cell">Phone</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('name')}>
+                    Client Name
+                    {getSortIcon('name')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('contactPerson')}>
+                    Contact Person
+                    {getSortIcon('contactPerson')}
+                  </Button>
+                </TableHead>
                 <TableHead className="hidden md:table-cell">
-                  Join Date
+                  <Button variant="ghost" onClick={() => requestSort('email')}>
+                    Email
+                    {getSortIcon('email')}
+                  </Button>
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <Button variant="ghost" onClick={() => requestSort('phone')}>
+                    Phone
+                    {getSortIcon('phone')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('status')}>
+                    Status
+                    {getSortIcon('status')}
+                  </Button>
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <Button variant="ghost" onClick={() => requestSort('joinDate')}>
+                    Join Date
+                    {getSortIcon('joinDate')}
+                  </Button>
                 </TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -160,7 +225,7 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients.map((client) => (
+              {sortedClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.contactPerson}</TableCell>

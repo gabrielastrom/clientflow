@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { team as initialTeam } from "@/lib/data";
 import { type TeamMember } from "@/lib/types";
-import { PlusCircle, MoreHorizontal } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,13 +60,58 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
+type SortableTeamKeys = keyof TeamMember;
+
 export default function TeamPage() {
   const [team, setTeam] = React.useState<TeamMember[]>(initialTeam);
   const [selectedMember, setSelectedMember] = React.useState<TeamMember | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [sortConfig, setSortConfig] = React.useState<{ key: SortableTeamKeys; direction: 'ascending' | 'descending' } | null>(null);
   const { toast } = useToast();
+
+  const sortedTeam = React.useMemo(() => {
+    let sortableItems = [...team];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue: string | number = a[sortConfig.key] as string | number;
+        let bValue: string | number = b[sortConfig.key] as string | number;
+        
+        if (sortConfig.key === 'assignedClients') {
+          aValue = a.assignedClients.length;
+          bValue = b.assignedClients.length;
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [team, sortConfig]);
+
+  const requestSort = (key: SortableTeamKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableTeamKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUp className="ml-2 h-4 w-4 text-primary" />;
+    }
+    return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+  };
 
   const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -141,18 +186,43 @@ export default function TeamPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="hidden lg:table-cell">Phone</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Assigned Clients</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('name')}>
+                    Name
+                    {getSortIcon('name')}
+                  </Button>
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <Button variant="ghost" onClick={() => requestSort('email')}>
+                    Email
+                    {getSortIcon('email')}
+                  </Button>
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  <Button variant="ghost" onClick={() => requestSort('phone')}>
+                    Phone
+                    {getSortIcon('phone')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('role')}>
+                    Role
+                    {getSortIcon('role')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('assignedClients')}>
+                    Assigned Clients
+                    {getSortIcon('assignedClients')}
+                  </Button>
+                </TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {team.map((member) => (
+              {sortedTeam.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell className="font-medium">{member.name}</TableCell>
                   <TableCell className="hidden md:table-cell">

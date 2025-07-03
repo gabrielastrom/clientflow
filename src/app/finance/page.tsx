@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { revenues as initialRevenues, clients } from "@/lib/data";
 import { type Revenue } from "@/lib/types";
-import { PlusCircle, MoreHorizontal } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,13 +59,62 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
+type SortableRevenueKeys = keyof Revenue;
+
 export default function FinancePage() {
   const [revenues, setRevenues] = React.useState<Revenue[]>(initialRevenues);
   const [selectedRevenue, setSelectedRevenue] = React.useState<Revenue | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [sortConfig, setSortConfig] = React.useState<{ key: SortableRevenueKeys; direction: 'ascending' | 'descending' } | null>(null);
+
   const { toast } = useToast();
+
+  const sortedRevenues = React.useMemo(() => {
+    let sortableItems = [...revenues];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+  
+        if (sortConfig.key === 'revenue') {
+          aValue = a.revenue;
+          bValue = b.revenue;
+        } else if (sortConfig.key === 'month') {
+          aValue = new Date(a.month).getTime();
+          bValue = new Date(b.month).getTime();
+        }
+  
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [revenues, sortConfig]);
+
+  const requestSort = (key: SortableRevenueKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableRevenueKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUp className="ml-2 h-4 w-4 text-primary" />;
+    }
+    return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+  };
 
   const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -116,10 +165,12 @@ export default function FinancePage() {
   return (
     <AppShell>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Finance</h1>
-        <p className="text-muted-foreground">
-          Track your agency's revenue and financial performance.
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Finance</h1>
+          <p className="text-muted-foreground">
+            Track your agency's revenue and financial performance.
+          </p>
+        </div>
          <Button onClick={() => setIsAddOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Revenue
@@ -136,17 +187,37 @@ export default function FinancePage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[120px]">Revenue</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead className="hidden md:table-cell">Month</TableHead>
-                <TableHead>Comment</TableHead>
+                <TableHead className="w-[120px]">
+                  <Button variant="ghost" onClick={() => requestSort('revenue')}>
+                    Revenue
+                    {getSortIcon('revenue')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('client')}>
+                    Client
+                    {getSortIcon('client')}
+                  </Button>
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  <Button variant="ghost" onClick={() => requestSort('month')}>
+                    Month
+                    {getSortIcon('month')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('comment')}>
+                    Comment
+                    {getSortIcon('comment')}
+                  </Button>
+                </TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {revenues.map((item) => (
+              {sortedRevenues.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
                     ${item.revenue.toLocaleString()}

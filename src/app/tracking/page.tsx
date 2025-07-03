@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { timeEntries as initialTimeEntries, clients, teamMembers } from "@/lib/data";
 import type { TimeEntry } from "@/lib/types";
-import { PlusCircle, MoreHorizontal } from "lucide-react";
+import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,12 +49,15 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
+type SortableTimeEntryKeys = keyof TimeEntry;
+
 export default function TrackingPage() {
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>(initialTimeEntries);
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
   const [selectedEntry, setSelectedEntry] = React.useState<TimeEntry | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [defaultDate, setDefaultDate] = React.useState("");
+  const [sortConfig, setSortConfig] = React.useState<{ key: SortableTimeEntryKeys; direction: 'ascending' | 'descending' } | null>(null);
 
   const { toast } = useToast();
 
@@ -62,6 +65,62 @@ export default function TrackingPage() {
     // Set the default date only on the client
     setDefaultDate(new Date().toISOString().split("T")[0]);
   }, []);
+
+  const parseDuration = (duration: string): number => {
+    const parts = duration.split(' ');
+    let minutes = 0;
+    parts.forEach(part => {
+        if (part.includes('h')) {
+            minutes += parseInt(part.replace('h', ''), 10) * 60;
+        }
+        if (part.includes('m')) {
+            minutes += parseInt(part.replace('m', ''), 10);
+        }
+    });
+    return minutes;
+  };
+
+  const sortedTimeEntries = React.useMemo(() => {
+    let sortableItems = [...timeEntries];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue: string | number = a[sortConfig.key];
+        let bValue: string | number = b[sortConfig.key];
+        
+        if (sortConfig.key === 'duration') {
+          aValue = parseDuration(a.duration);
+          bValue = parseDuration(b.duration);
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [timeEntries, sortConfig]);
+
+  const requestSort = (key: SortableTimeEntryKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: SortableTimeEntryKeys) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUp className="ml-2 h-4 w-4 text-primary" />;
+    }
+    return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
+  };
 
   const handleLogTimeSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -209,18 +268,43 @@ export default function TrackingPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Team Member</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Task</TableHead>
-                <TableHead className="text-right">Duration</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('date')}>
+                    Date
+                    {getSortIcon('date')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('teamMember')}>
+                    Team Member
+                    {getSortIcon('teamMember')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('client')}>
+                    Client
+                    {getSortIcon('client')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('task')}>
+                    Task
+                    {getSortIcon('task')}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <Button variant="ghost" onClick={() => requestSort('duration')} className="justify-end w-full">
+                    Duration
+                    {getSortIcon('duration')}
+                  </Button>
+                </TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {timeEntries.map((entry) => (
+              {sortedTimeEntries.map((entry) => (
                 <TableRow key={entry.id}>
                   <TableCell>{entry.date}</TableCell>
                   <TableCell className="font-medium">{entry.teamMember}</TableCell>
@@ -303,7 +387,7 @@ export default function TrackingPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit-duration" className="text-right">Duration</Label>
-                  <Input id="edit-duration" name="duration" defaultValue={selectedEntry.duration} className="col-san-3" required />
+                  <Input id="edit-duration" name="duration" defaultValue={selectedEntry.duration} className="col-span-3" required />
                 </div>
               </div>
               <DialogFooter>
