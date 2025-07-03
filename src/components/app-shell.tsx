@@ -25,6 +25,8 @@ import {
   Briefcase,
   Banknote,
   Home,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { Footer } from "./footer";
+import { useTheme } from "next-themes";
 
 const navItems = [
   { href: "/home", icon: Home, label: "Home" },
@@ -76,6 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </SidebarContent>
           <SidebarFooter>
             <SidebarMenu>
+              <ThemeToggle />
               <NavItem href="/settings" icon={Settings} label="Settings" />
               <UserMenu />
             </SidebarMenu>
@@ -151,6 +155,34 @@ function NavItem({
           <span>{label}</span>
         </SidebarMenuButton>
       </Link>
+    </SidebarMenuItem>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
+  const label = theme === 'light' ? 'Dark mode' : 'Light mode';
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton onClick={toggleTheme} tooltip={label}>
+        {theme === 'light' ? <Moon /> : <Sun />}
+        <span>{label}</span>
+      </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
