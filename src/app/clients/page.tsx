@@ -192,6 +192,12 @@ export default function ClientsPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
+                  <Button variant="ghost" onClick={() => requestSort('status')}>
+                    Status
+                    {getSortIcon('status')}
+                  </Button>
+                </TableHead>
+                <TableHead>
                   <Button variant="ghost" onClick={() => requestSort('contactPerson')}>
                     Contact Person
                     {getSortIcon('contactPerson')}
@@ -215,12 +221,6 @@ export default function ClientsPage() {
                     {getSortIcon('monthlyVideos')}
                   </Button>
                 </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('status')}>
-                    Status
-                    {getSortIcon('status')}
-                  </Button>
-                </TableHead>
                 <TableHead className="hidden md:table-cell">
                   <Button variant="ghost" onClick={() => requestSort('joinDate')}>
                     Join Date
@@ -236,14 +236,6 @@ export default function ClientsPage() {
               {sortedClients.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell>{client.contactPerson}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {client.email}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {client.phone}
-                  </TableCell>
-                  <TableCell>{client.monthlyVideos}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -262,6 +254,14 @@ export default function ClientsPage() {
                       {client.status}
                     </Badge>
                   </TableCell>
+                  <TableCell>{client.contactPerson}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {client.email}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {client.phone}
+                  </TableCell>
+                  <TableCell>{client.monthlyVideos}</TableCell>
                   <TableCell className="hidden md:table-cell">
                     {client.joinDate}
                   </TableCell>
