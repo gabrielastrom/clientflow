@@ -21,13 +21,13 @@ type TeamPerformanceData = {
   name: string;
   role: string;
   hoursThisMonth: number;
-  videosThisMonth: number;
 };
 
 
 export default function DashboardPage() {
   const [todaysAppointments, setTodaysAppointments] = React.useState<Appointment[]>([]);
   const [newClientsThisQuarter, setNewClientsThisQuarter] = React.useState(0);
+  const [totalVideosThisMonth, setTotalVideosThisMonth] = React.useState(0);
   const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
 
   React.useEffect(() => {
@@ -43,13 +43,24 @@ export default function DashboardPage() {
     setTodaysAppointments(filteredAppointments);
 
     // Calculate new clients this quarter
-    const newClients = clients.filter(client => {
+    const newClientsCount = clients.filter(client => {
       const joinDate = new Date(client.joinDate);
       return joinDate.getFullYear() === currentYear && Math.floor(joinDate.getMonth() / 3) === currentQuarter;
     }).length;
-    setNewClientsThisQuarter(newClients);
+    setNewClientsThisQuarter(newClientsCount);
 
-    // Calculate team performance
+    // Calculate total videos this month
+    const totalVideos = content
+      .filter(c => {
+        const deadlineDate = new Date(c.deadline);
+        return c.status === 'Done' &&
+               deadlineDate.getFullYear() === currentYear &&
+               deadlineDate.getMonth() === currentMonth;
+      })
+      .length;
+    setTotalVideosThisMonth(totalVideos);
+
+    // Calculate team performance (hours per member)
     const performanceData = team.map(member => {
       const hoursThisMonth = timeEntries
         .filter(entry => {
@@ -59,23 +70,12 @@ export default function DashboardPage() {
                  entryDate.getMonth() === currentMonth;
         })
         .reduce((total, entry) => total + entry.duration, 0);
-
-      const videosThisMonth = content
-        .filter(c => {
-          const deadlineDate = new Date(c.deadline);
-          return c.owner === member.name &&
-                 c.status === 'Done' &&
-                 deadlineDate.getFullYear() === currentYear &&
-                 deadlineDate.getMonth() === currentMonth;
-        })
-        .length;
       
       return {
         id: member.id,
         name: member.name,
         role: member.role,
         hoursThisMonth: hoursThisMonth,
-        videosThisMonth: videosThisMonth,
       };
     });
     setTeamPerformance(performanceData);
@@ -90,7 +90,7 @@ export default function DashboardPage() {
             Welcome back! Here's a summary of your agency's performance.
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -155,6 +155,22 @@ export default function DashboardPage() {
               </p>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Videos Produced (Month)
+              </CardTitle>
+              <Video className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {totalVideosThisMonth}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Completed this month
+              </p>
+            </CardContent>
+          </Card>
         </div>
         <div className="grid gap-6 lg:grid-cols-5">
             <Card className="lg:col-span-3">
@@ -208,14 +224,10 @@ export default function DashboardPage() {
                   <div className="flex-1">
                     <p className="font-semibold">{member.name}</p>
                     <p className="text-sm text-muted-foreground">{member.role}</p>
-                    <div className="flex items-center gap-4 mt-2 text-sm">
+                    <div className="mt-2 text-sm">
                       <div className="flex items-center gap-1.5">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <span>{member.hoursThisMonth.toFixed(1)} hrs</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Video className="h-4 w-4 text-muted-foreground" />
-                        <span>{member.videosThisMonth} videos</span>
                       </div>
                     </div>
                   </div>
