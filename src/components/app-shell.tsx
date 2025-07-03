@@ -79,29 +79,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
-            <header className="sticky top-0 z-10 flex items-center h-14 px-4 border-b md:hidden bg-background/95 backdrop-blur-sm">
-                <SidebarTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-6 w-6"
+            <header className="sticky top-0 z-10 grid h-14 grid-cols-3 items-center border-b bg-background/95 px-4 backdrop-blur-sm md:hidden">
+                <div className="flex justify-start">
+                    <SidebarTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-6 w-6"
+                        >
+                        <line x1="4" x2="20" y1="6" y2="6" />
+                        <line x1="4" x2="20" y1="12" y2="12" />
+                        <line x1="4" x2="20" y1="18" y2="18" />
+                        </svg>
+                        <span className="sr-only">Toggle Sidebar</span>
+                    </Button>
+                    </SidebarTrigger>
+                </div>
+                <div className="flex justify-center">
+                    <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2"
                     >
-                      <line x1="4" x2="20" y1="6" y2="6" />
-                      <line x1="4" x2="20" y1="12" y2="12" />
-                      <line x1="4" x2="20" y1="18" y2="18" />
-                    </svg>
-                    <span className="sr-only">Toggle Sidebar</span>
-                  </Button>
-                </SidebarTrigger>
-                <div className="ml-auto">
+                    <Logo />
+                    <span className="font-bold text-lg text-foreground">
+                        ClientFlow
+                    </span>
+                    </Link>
+                </div>
+                <div className="flex justify-end">
                     <UserMenu isMobile />
                 </div>
             </header>
