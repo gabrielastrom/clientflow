@@ -63,7 +63,7 @@ export const financialData = {
     revenueByClient: [
         { name: 'Glamour Inc.', revenue: 35000, fill: "var(--color-chart-1)" },
         { name: 'Peak Fitness', revenue: 40000, fill: "var(--color-chart-2)" },
-        { name: 'Coffee House', revenue: 10000, fill: "var(--color-chart-3)" },
+        { name: 'The Coffee House', revenue: 10000, fill: "var(--color-chart-4)" },
     ],
     profitTrend: [
         { month: 'Jan', profit: 7000 },

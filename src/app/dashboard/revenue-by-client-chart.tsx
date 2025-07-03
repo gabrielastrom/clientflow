@@ -21,15 +21,12 @@ const chartConfig = {
   },
   "Glamour Inc.": {
     label: "Glamour Inc.",
-    color: "hsl(var(--chart-1))",
   },
   "Peak Fitness": {
     label: "Peak Fitness",
-    color: "hsl(var(--chart-2))",
   },
-  "Coffee House": {
-    label: "Coffee House",
-    color: "hsl(var(--chart-3))",
+  "The Coffee House": {
+    label: "The Coffee House",
   },
 } satisfies ChartConfig;
 
