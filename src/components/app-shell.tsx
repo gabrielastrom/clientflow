@@ -48,7 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="flex min-h-screen">
         <Sidebar className="border-r bg-card">
-          <SidebarHeader className="p-4">
+          <SidebarHeader className="p-4 flex flex-row items-center justify-between">
             <Link
               href="/dashboard"
               className="flex items-center gap-2"
@@ -58,8 +58,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ClientFlow
               </span>
             </Link>
+            <SidebarTrigger className="hidden md:flex" />
           </SidebarHeader>
-          <SidebarContent>
+          <SidebarContent className="flex flex-col justify-center">
             <SidebarMenu>
               {navItems.map((item) => (
                 <NavItem key={item.href} {...item} />
@@ -147,7 +148,7 @@ function UserMenu({ isMobile = false }) {
                 <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="person user" alt="User Avatar" />
                 <AvatarFallback>AD</AvatarFallback>
             </Avatar>
-            <div className="group-data-[collapsible=icon]:hidden text-left">
+            <div className="group-data-[collapsible=icon]:hidden">
                 <p className="font-medium text-sm">Alex Doe</p>
                 <p className="text-xs text-muted-foreground">alex@clientflow.com</p>
             </div>
