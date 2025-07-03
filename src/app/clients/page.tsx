@@ -68,8 +68,26 @@ export default function ClientsPage() {
   const [isViewOpen, setIsViewOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [isAddOpen, setIsAddOpen] = React.useState(false);
 
   const { toast } = useToast();
+
+  const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const newClient: Client = {
+      id: `${Date.now()}`,
+      name: formData.get("name") as string,
+      contactPerson: formData.get("contactPerson") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      status: formData.get("status") as Client["status"],
+      joinDate: new Date().toLocaleDateString('en-CA'),
+    };
+    setClients((prevClients) => [newClient, ...prevClients]);
+    setIsAddOpen(false);
+    toast({ title: "Success", description: "Client added successfully." });
+  };
 
   const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -81,9 +99,8 @@ export default function ClientsPage() {
       name: formData.get("name") as string,
       contactPerson: formData.get("contactPerson") as string,
       email: formData.get("email") as string,
-      phone: selectedClient.phone,
+      phone: formData.get("phone") as string,
       status: formData.get("status") as Client["status"],
-      joinDate: selectedClient.joinDate,
     };
 
     setClients(
@@ -113,7 +130,7 @@ export default function ClientsPage() {
             Manage your client accounts and information.
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Client
         </Button>
@@ -132,6 +149,7 @@ export default function ClientsPage() {
                 <TableHead>Client Name</TableHead>
                 <TableHead>Contact Person</TableHead>
                 <TableHead className="hidden md:table-cell">Email</TableHead>
+                <TableHead className="hidden md:table-cell">Phone</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Join Date
@@ -148,6 +166,9 @@ export default function ClientsPage() {
                   <TableCell>{client.contactPerson}</TableCell>
                   <TableCell className="hidden md:table-cell">
                     {client.email}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {client.phone}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -219,6 +240,57 @@ export default function ClientsPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      {/* Add Client Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Client</DialogTitle>
+            <DialogDescription>
+              Fill in the details for the new client.
+            </DialogDescription>
+          </DialogHeader>
+            <form onSubmit={handleAddSubmit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">Name</Label>
+                  <Input id="name" name="name" className="col-span-3" required/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="contactPerson" className="text-right">Contact</Label>
+                  <Input id="contactPerson" name="contactPerson" className="col-span-3" required/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Input id="email" name="email" type="email" className="col-span-3" required/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone" className="text-right">Phone</Label>
+                  <Input id="phone" name="phone" className="col-span-3" required/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">Status</Label>
+                  <Select name="status" defaultValue="Lead">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Inactive">Inactive</SelectItem>
+                      <SelectItem value="Lead">Lead</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">Cancel</Button>
+                </DialogClose>
+                <Button type="submit">Add Client</Button>
+              </DialogFooter>
+            </form>
+        </DialogContent>
+      </Dialog>
 
       {/* View Client Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
@@ -298,43 +370,23 @@ export default function ClientsPage() {
             <form onSubmit={handleEditSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    defaultValue={selectedClient.name}
-                    className="col-span-3"
-                  />
+                  <Label htmlFor="name" className="text-right">Name</Label>
+                  <Input id="name" name="name" defaultValue={selectedClient.name} className="col-span-3"/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="contactPerson" className="text-right">
-                    Contact
-                  </Label>
-                  <Input
-                    id="contactPerson"
-                    name="contactPerson"
-                    defaultValue={selectedClient.contactPerson}
-                    className="col-span-3"
-                  />
+                  <Label htmlFor="contactPerson" className="text-right">Contact</Label>
+                  <Input id="contactPerson" name="contactPerson" defaultValue={selectedClient.contactPerson} className="col-span-3"/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    defaultValue={selectedClient.email}
-                    className="col-span-3"
-                  />
+                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Input id="email" name="email" type="email" defaultValue={selectedClient.email} className="col-span-3"/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">
-                    Status
-                  </Label>
+                  <Label htmlFor="phone" className="text-right">Phone</Label>
+                  <Input id="phone" name="phone" defaultValue={selectedClient.phone} className="col-span-3"/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">Status</Label>
                   <Select name="status" defaultValue={selectedClient.status}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a status" />
@@ -349,9 +401,7 @@ export default function ClientsPage() {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    Cancel
-                  </Button>
+                  <Button type="button" variant="secondary">Cancel</Button>
                 </DialogClose>
                 <Button type="submit">Save Changes</Button>
               </DialogFooter>

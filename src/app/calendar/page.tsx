@@ -7,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { appointments as allAppointments } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, MoreHorizontal } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,24 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type Appointment } from "@/lib/types";
@@ -29,13 +47,20 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CalendarPage() {
+  const [appointments, setAppointments] = React.useState<Appointment[]>(allAppointments);
   const [date, setDate] = React.useState<Date | undefined>();
   const [selectedAppointments, setSelectedAppointments] = React.useState<Appointment[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
+  const [isAddOpen, setIsAddOpen] = React.useState(false);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
-    // Set the initial date only on the client
     if (!date) {
       setDate(new Date());
     }
@@ -43,17 +68,72 @@ export default function CalendarPage() {
 
   React.useEffect(() => {
     if (date) {
-      const filteredAppointments = allAppointments.filter(
+      const filteredAppointments = appointments.filter(
         (appt) => new Date(appt.date).toDateString() === date.toDateString()
       );
       setSelectedAppointments(filteredAppointments);
     } else {
         setSelectedAppointments([]);
     }
-  }, [date]);
+  }, [date, appointments]);
+
+  const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const formDate = formData.get("date") as string;
+    const formTime = formData.get("time") as string;
+    const [year, month, day] = formDate.split('-').map(Number);
+    const [hours, minutes] = formTime.split(':').map(Number);
+
+    const newAppointment: Appointment = {
+      id: `${Date.now()}`,
+      title: formData.get("title") as string,
+      date: new Date(year, month - 1, day, hours, minutes),
+      type: formData.get("type") as Appointment["type"],
+    };
+    
+    setAppointments((prev) => [newAppointment, ...prev]);
+    setIsAddOpen(false);
+    toast({ title: "Success", description: "Appointment added successfully." });
+  };
+  
+  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedAppointment) return;
+
+    const formData = new FormData(event.currentTarget);
+    const formDate = formData.get("date") as string;
+    const formTime = formData.get("time") as string;
+    const [year, month, day] = formDate.split('-').map(Number);
+    const [hours, minutes] = formTime.split(':').map(Number);
+
+    const updatedAppointment: Appointment = {
+      ...selectedAppointment,
+      title: formData.get("title") as string,
+      date: new Date(year, month - 1, day, hours, minutes),
+      type: formData.get("type") as Appointment["type"],
+    };
+
+    setAppointments(
+      appointments.map((appt) => (appt.id === updatedAppointment.id ? updatedAppointment : appt))
+    );
+    setIsEditOpen(false);
+    toast({ title: "Success", description: "Appointment updated successfully." });
+  };
+
+  const handleDeleteAppointment = () => {
+    if (!selectedAppointment) return;
+    setAppointments(appointments.filter((appt) => appt.id !== selectedAppointment.id));
+    setIsDeleteAlertOpen(false);
+    toast({
+      title: "Appointment Deleted",
+      description: `The appointment has been removed.`,
+      variant: "destructive",
+    });
+  };
 
   function DayContentWithDot(props: { date: Date; activeModifiers: Record<string, boolean> }) {
-    const hasAppointment = allAppointments.some(
+    const hasAppointment = appointments.some(
       (appt) => new Date(appt.date).toDateString() === props.date.toDateString()
     );
   
@@ -81,36 +161,10 @@ export default function CalendarPage() {
           <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
           <p className="text-muted-foreground">Manage your appointments and deadlines.</p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Appointment
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Appointment</DialogTitle>
-              <DialogDescription>Fill in the details for your new event.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="title" className="text-right">Title</Label>
-                    <Input id="title" placeholder="e.g. Strategy Meeting" className="col-span-3" />
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="date" className="text-right">Date</Label>
-                    <Input id="date" type="date" className="col-span-3" />
-                </div>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
-                <Button type="submit">Save</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsAddOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Add Appointment
+        </Button>
       </div>
       <div className="flex flex-col gap-6">
         <Card>
@@ -133,7 +187,7 @@ export default function CalendarPage() {
                         key={appt.id}
                         className="pl-4 md:basis-1/2 lg:basis-1/3"
                       >
-                        <div className="p-4 rounded-lg bg-muted/50 h-full">
+                        <div className="p-4 rounded-lg bg-muted/50 h-full flex flex-col justify-between">
                           <div className="flex justify-between items-start">
                             <div>
                               <p className="font-semibold">{appt.title}</p>
@@ -153,6 +207,41 @@ export default function CalendarPage() {
                             >
                               {appt.type}
                             </Badge>
+                          </div>
+                          <div className="flex justify-end mt-2">
+                             <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  aria-haspopup="true"
+                                  size="icon"
+                                  variant="ghost"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Toggle menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem
+                                  onSelect={() => {
+                                    setSelectedAppointment(appt);
+                                    setIsEditOpen(true);
+                                  }}
+                                >
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                  onSelect={() => {
+                                    setSelectedAppointment(appt);
+                                    setIsDeleteAlertOpen(true);
+                                  }}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </CarouselItem>
@@ -189,6 +278,117 @@ export default function CalendarPage() {
             </CardContent>
         </Card>
       </div>
+
+       {/* Add Appointment Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Appointment</DialogTitle>
+            <DialogDescription>Fill in the details for your new event.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">Title</Label>
+                <Input id="title" name="title" placeholder="e.g. Strategy Meeting" className="col-span-3" required />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="date" className="text-right">Date</Label>
+                <Input id="date" name="date" type="date" defaultValue={date?.toLocaleDateString('en-CA')} className="col-span-3" required/>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="time" className="text-right">Time</Label>
+                <Input id="time" name="time" type="time" defaultValue={"12:00"} className="col-span-3" required/>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="type" className="text-right">Type</Label>
+                  <Select name="type" defaultValue="Meeting">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Meeting">Meeting</SelectItem>
+                      <SelectItem value="Task">Task</SelectItem>
+                      <SelectItem value="Deadline">Deadline</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+              <Button type="submit">Save</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Appointment Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Appointment</DialogTitle>
+            <DialogDescription>Make changes to the appointment.</DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <form onSubmit={handleEditSubmit}>
+               <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">Title</Label>
+                  <Input id="title" name="title" defaultValue={selectedAppointment.title} className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">Date</Label>
+                  <Input id="date" name="date" type="date" defaultValue={selectedAppointment.date?.toLocaleDateString('en-CA')} className="col-span-3" required/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="time" className="text-right">Time</Label>
+                  <Input id="time" name="time" type="time" defaultValue={selectedAppointment.date?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} className="col-span-3" required/>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="type" className="text-right">Type</Label>
+                    <Select name="type" defaultValue={selectedAppointment.type}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Meeting">Meeting</SelectItem>
+                        <SelectItem value="Task">Task</SelectItem>
+                        <SelectItem value="Deadline">Deadline</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Appointment Alert */}
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              appointment "{selectedAppointment?.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteAppointment}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </AppShell>
   );
 }
