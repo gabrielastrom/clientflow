@@ -174,146 +174,148 @@ export default function ClientsPage() {
           Add Client
         </Button>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Client List</CardTitle>
-          <CardDescription>
-            A list of all clients in your agency.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('name')}>
-                    Client Name
-                    {getSortIcon('name')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('status')}>
-                    Status
-                    {getSortIcon('status')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('contactPerson')}>
-                    Contact Person
-                    {getSortIcon('contactPerson')}
-                  </Button>
-                </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  <Button variant="ghost" onClick={() => requestSort('email')}>
-                    Email
-                    {getSortIcon('email')}
-                  </Button>
-                </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  <Button variant="ghost" onClick={() => requestSort('phone')}>
-                    Phone
-                    {getSortIcon('phone')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('monthlyVideos')}>
-                    Monthly Videos
-                    {getSortIcon('monthlyVideos')}
-                  </Button>
-                </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  <Button variant="ghost" onClick={() => requestSort('joinDate')}>
-                    Join Date
-                    {getSortIcon('joinDate')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedClients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.name}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        client.status === "Active"
-                          ? "default"
-                          : client.status === "Lead"
-                          ? "secondary"
-                          : "outline"
-                      }
-                      className={
-                        client.status === "Active"
-                          ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
-                          : ""
-                      }
-                    >
-                      {client.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{client.contactPerson}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {client.email}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {client.phone}
-                  </TableCell>
-                  <TableCell>{client.monthlyVideos}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {client.joinDate}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup="true"
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            setSelectedClient(client);
-                            setIsEditOpen(true);
-                          }}
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            setSelectedClient(client);
-                            setIsViewOpen(true);
-                          }}
-                        >
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                          onSelect={() => {
-                            setSelectedClient(client);
-                            setIsDeleteAlertOpen(true);
-                          }}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+      <div className="grid">
+        <Card>
+          <CardHeader>
+            <CardTitle>Client List</CardTitle>
+            <CardDescription>
+              A list of all clients in your agency.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('name')}>
+                      Client Name
+                      {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('status')}>
+                      Status
+                      {getSortIcon('status')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('contactPerson')}>
+                      Contact Person
+                      {getSortIcon('contactPerson')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button variant="ghost" onClick={() => requestSort('email')}>
+                      Email
+                      {getSortIcon('email')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button variant="ghost" onClick={() => requestSort('phone')}>
+                      Phone
+                      {getSortIcon('phone')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('monthlyVideos')}>
+                      Monthly Videos
+                      {getSortIcon('monthlyVideos')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button variant="ghost" onClick={() => requestSort('joinDate')}>
+                      Join Date
+                      {getSortIcon('joinDate')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {sortedClients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className="font-medium">{client.name}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          client.status === "Active"
+                            ? "default"
+                            : client.status === "Lead"
+                            ? "secondary"
+                            : "outline"
+                        }
+                        className={
+                          client.status === "Active"
+                            ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
+                            : ""
+                        }
+                      >
+                        {client.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{client.contactPerson}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {client.email}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {client.phone}
+                    </TableCell>
+                    <TableCell>{client.monthlyVideos}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {client.joinDate}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setSelectedClient(client);
+                              setIsEditOpen(true);
+                            }}
+                          >
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setSelectedClient(client);
+                              setIsViewOpen(true);
+                            }}
+                          >
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            onSelect={() => {
+                              setSelectedClient(client);
+                              setIsDeleteAlertOpen(true);
+                            }}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
       
       {/* Add Client Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
