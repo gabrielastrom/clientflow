@@ -40,7 +40,7 @@ export default function FinancialChart() {
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            tickFormatter={(value) => `$${Number(value) / 1000}k`} 
+            tickFormatter={(value) => `${Number(value) / 1000}k kr`} 
             tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
           />
           <Tooltip

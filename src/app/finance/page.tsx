@@ -220,7 +220,7 @@ export default function FinancePage() {
               {sortedRevenues.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">
-                    ${item.revenue.toLocaleString()}
+                    {item.revenue.toLocaleString()} kr
                   </TableCell>
                   <TableCell>{item.client}</TableCell>
                   <TableCell className="hidden md:table-cell">
