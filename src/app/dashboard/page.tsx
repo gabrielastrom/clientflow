@@ -11,13 +11,14 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { financialData, appointments as allAppointments, team, timeEntries, content, clients } from "@/lib/data";
 import { type Appointment } from "@/lib/types";
-import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock } from "lucide-react";
+import { CheckCircle2, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from 'date-fns';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import RevenueByClientChart from "./revenue-by-client-chart";
 
 type TeamPerformanceData = {
   id: string;
@@ -194,6 +195,17 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
             <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle>Revenue by Client</CardTitle>
+                    <CardDescription>This month's revenue distribution.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <RevenueByClientChart />
+                </CardContent>
+            </Card>
+        </div>
+        <div className="grid grid-cols-1">
+            <Card>
                 <CardHeader>
                     <CardTitle>Weekly Agenda</CardTitle>
                     <CardDescription>Your tasks and appointments for this week.</CardDescription>
