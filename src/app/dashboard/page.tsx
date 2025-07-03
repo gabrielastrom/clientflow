@@ -14,6 +14,7 @@ import { type Appointment } from "@/lib/types";
 import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
 
 type TeamPerformanceData = {
   id: string;
@@ -233,6 +234,17 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </div>
+        <div className="grid grid-cols-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Notes</CardTitle>
+              <CardDescription>Your personal scratchpad for quick notes and reminders.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea placeholder="Type your notes here..." className="h-48 resize-none" />
             </CardContent>
           </Card>
         </div>
