@@ -24,10 +24,10 @@ export const appointments: Appointment[] = [
 ];
 
 export const timeEntries: TimeEntry[] = [
-    { id: '1', date: '2024-07-21', teamMember: 'Alex Ray', client: 'Glamour Inc.', task: 'Content Creation', duration: '4h 0m' },
-    { id: '2', date: '2024-07-21', teamMember: 'Casey Jordan', client: 'Peak Fitness', task: 'Ad Campaign Management', duration: '6h 30m' },
-    { id: '3', date: '2024-07-20', teamMember: 'Alex Ray', client: 'The Coffee House', task: 'Analytics Report', duration: '2h 15m' },
-    { id: '4', date: '2024-07-20', teamMember: 'Taylor Morgan', client: 'Glamour Inc.', task: 'Client Meeting', duration: '1h 0m' },
+    { id: '1', date: '2024-07-21', teamMember: 'Alex Ray', client: 'Glamour Inc.', task: 'Content Creation', duration: 4 },
+    { id: '2', date: '2024-07-21', teamMember: 'Casey Jordan', client: 'Peak Fitness', task: 'Ad Campaign Management', duration: 6.5 },
+    { id: '3', date: '2024-07-20', teamMember: 'Alex Ray', client: 'The Coffee House', task: 'Analytics Report', duration: 2.25 },
+    { id: '4', date: '2024-07-20', teamMember: 'Taylor Morgan', client: 'Glamour Inc.', task: 'Client Meeting', duration: 1 },
 ];
 
 export const teamMembers: string[] = team.map(member => member.name);

@@ -23,7 +23,7 @@ export type TimeEntry = {
     teamMember: string;
     client: string;
     task: string;
-    duration: string;
+    duration: number;
 };
 
 export type TeamMember = {

@@ -66,32 +66,12 @@ export default function TrackingPage() {
     setDefaultDate(new Date().toISOString().split("T")[0]);
   }, []);
 
-  const parseDuration = (duration: string): number => {
-    const parts = duration.split(' ');
-    let minutes = 0;
-    parts.forEach(part => {
-        if (part.includes('h')) {
-            minutes += parseInt(part.replace('h', ''), 10) * 60;
-        }
-        if (part.includes('m')) {
-            minutes += parseInt(part.replace('m', ''), 10);
-        }
-    });
-    return minutes;
-  };
-
   const sortedTimeEntries = React.useMemo(() => {
     let sortableItems = [...timeEntries];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
-        let aValue: string | number = a[sortConfig.key];
-        let bValue: string | number = b[sortConfig.key];
-        
-        if (sortConfig.key === 'duration') {
-          aValue = parseDuration(a.duration);
-          bValue = parseDuration(b.duration);
-        }
-
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
         if (aValue < bValue) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
@@ -131,7 +111,7 @@ export default function TrackingPage() {
       teamMember: formData.get("teamMember") as string,
       client: formData.get("client") as string,
       task: formData.get("task") as string,
-      duration: formData.get("duration") as string,
+      duration: parseFloat(formData.get("duration") as string),
     };
 
     setTimeEntries([newEntry, ...timeEntries]);
@@ -154,7 +134,7 @@ export default function TrackingPage() {
       teamMember: formData.get("teamMember") as string,
       client: formData.get("client") as string,
       task: formData.get("task") as string,
-      duration: formData.get("duration") as string,
+      duration: parseFloat(formData.get("duration") as string),
     };
 
     setTimeEntries(
@@ -238,9 +218,9 @@ export default function TrackingPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="duration" className="text-right">
-                    Duration
+                    Hours
                   </Label>
-                  <Input id="duration" name="duration" placeholder="e.g., 1h 30m" className="col-span-3" required />
+                  <Input id="duration" name="duration" type="number" step="0.01" placeholder="e.g., 1.5" className="col-span-3" required />
                 </div>
               </div>
               <DialogFooter>
@@ -294,7 +274,7 @@ export default function TrackingPage() {
                 </TableHead>
                 <TableHead className="text-right">
                   <Button variant="ghost" onClick={() => requestSort('duration')} className="justify-end w-full">
-                    Duration
+                    Hours
                     {getSortIcon('duration')}
                   </Button>
                 </TableHead>
@@ -310,7 +290,7 @@ export default function TrackingPage() {
                   <TableCell className="font-medium">{entry.teamMember}</TableCell>
                   <TableCell>{entry.client}</TableCell>
                   <TableCell>{entry.task}</TableCell>
-                  <TableCell className="text-right">{entry.duration}</TableCell>
+                  <TableCell className="text-right">{entry.duration.toFixed(2)}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -386,8 +366,8 @@ export default function TrackingPage() {
                   <Input id="edit-task" name="task" defaultValue={selectedEntry.task} className="col-span-3" required />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-duration" className="text-right">Duration</Label>
-                  <Input id="edit-duration" name="duration" defaultValue={selectedEntry.duration} className="col-span-3" required />
+                  <Label htmlFor="edit-duration" className="text-right">Hours</Label>
+                  <Input id="edit-duration" name="duration" type="number" step="0.01" defaultValue={selectedEntry.duration} className="col-span-3" required />
                 </div>
               </div>
               <DialogFooter>
