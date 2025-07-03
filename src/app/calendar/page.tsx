@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type Appointment } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export default function CalendarPage() {
   const [date, setDate] = React.useState<Date | undefined>();
@@ -28,8 +29,10 @@ export default function CalendarPage() {
 
   React.useEffect(() => {
     // Set the initial date only on the client
-    setDate(new Date());
-  }, []);
+    if (!date) {
+      setDate(new Date());
+    }
+  }, [date]);
 
   React.useEffect(() => {
     if (date) {
@@ -37,8 +40,32 @@ export default function CalendarPage() {
         (appt) => new Date(appt.date).toDateString() === date.toDateString()
       );
       setSelectedAppointments(filteredAppointments);
+    } else {
+        setSelectedAppointments([]);
     }
   }, [date]);
+
+  function DayContentWithDot(props: { date: Date; activeModifiers: Record<string, boolean> }) {
+    const hasAppointment = allAppointments.some(
+      (appt) => new Date(appt.date).toDateString() === props.date.toDateString()
+    );
+  
+    return (
+      <div className="relative flex h-full w-full items-center justify-center">
+        {props.date.getDate()}
+        {hasAppointment && (
+          <div
+            className={cn(
+              "absolute bottom-1.5 h-1.5 w-1.5 rounded-full",
+              props.activeModifiers.selected
+                ? "bg-primary-foreground"
+                : "bg-primary"
+            )}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <AppShell>
@@ -92,6 +119,9 @@ export default function CalendarPage() {
                         table: "w-full border-collapse space-y-1",
                         head_row: "flex justify-around",
                         row: "flex w-full mt-2 justify-around",
+                    }}
+                    components={{
+                      DayContent: DayContentWithDot,
                     }}
                 />
             </CardContent>
