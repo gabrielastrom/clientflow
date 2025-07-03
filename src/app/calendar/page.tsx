@@ -198,7 +198,7 @@ export default function CalendarPage() {
             </CardHeader>
             <CardContent className="p-6">
               <ScrollArea className="w-full whitespace-nowrap">
-                <div className="flex w-max space-x-6 pb-4">
+                <div className="flex space-x-6 pb-4">
                   {weekDates.length > 0 ? weekDates.map((day) => {
                     const dayAppointments = weeklyAppointments
                       .filter((appt) => isSameDay(new Date(appt.date), day))
