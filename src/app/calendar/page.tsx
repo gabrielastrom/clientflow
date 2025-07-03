@@ -22,6 +22,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type Appointment } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function CalendarPage() {
   const [date, setDate] = React.useState<Date | undefined>();
@@ -112,29 +119,53 @@ export default function CalendarPage() {
                 Events for {date ? date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'today'}
                 </CardTitle>
             </CardHeader>
-            <CardContent>
-                {selectedAppointments.length > 0 ? (
-                <ul className="space-y-4">
+            <CardContent className="p-6">
+              {selectedAppointments.length > 0 ? (
+                <Carousel
+                  opts={{
+                    align: "start",
+                  }}
+                  className="w-full"
+                >
+                  <CarouselContent className="-ml-4">
                     {selectedAppointments.map((appt) => (
-                    <li key={appt.id} className="p-4 rounded-lg bg-muted/50">
-                        <div className="flex justify-between items-start">
+                      <CarouselItem
+                        key={appt.id}
+                        className="pl-4 md:basis-1/2 lg:basis-1/3"
+                      >
+                        <div className="p-4 rounded-lg bg-muted/50 h-full">
+                          <div className="flex justify-between items-start">
                             <div>
-                                <p className="font-semibold">{appt.title}</p>
-                                <p className="text-sm text-muted-foreground">
+                              <p className="font-semibold">{appt.title}</p>
+                              <p className="text-sm text-muted-foreground">
                                 {new Date(appt.date).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
                                 })}
-                                </p>
+                              </p>
                             </div>
-                            <Badge variant={appt.type === 'Deadline' ? 'destructive' : 'secondary'}>{appt.type}</Badge>
+                            <Badge
+                              variant={
+                                appt.type === "Deadline"
+                                  ? "destructive"
+                                  : "secondary"
+                              }
+                            >
+                              {appt.type}
+                            </Badge>
+                          </div>
                         </div>
-                    </li>
+                      </CarouselItem>
                     ))}
-                </ul>
-                ) : (
-                <p className="text-center text-muted-foreground py-8">No events scheduled for this day.</p>
-                )}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+                </Carousel>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  No events scheduled for this day.
+                </p>
+              )}
             </CardContent>
         </Card>
         <Card>
