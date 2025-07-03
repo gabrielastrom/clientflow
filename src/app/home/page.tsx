@@ -39,7 +39,7 @@ import { content as allContent, clients, timeEntries as initialTimeEntries, team
 import { type Content, type TimeEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from 'date-fns';
-import { Mail, MessageSquare, HardDrive, PlusCircle } from 'lucide-react';
+import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
 
 // Hardcoded current user for demonstration purposes
 const CURRENT_USER = "Alex Ray";
@@ -53,6 +53,8 @@ export default function HomePage() {
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>(initialTimeEntries);
   const [defaultDate, setDefaultDate] = React.useState("");
+  const [monthlyHours, setMonthlyHours] = React.useState(0);
+  const [monthlySalary, setMonthlySalary] = React.useState(0);
 
   const { toast } = useToast();
 
@@ -96,7 +98,20 @@ export default function HomePage() {
         setMonthlyProgress(0);
     }
 
-  }, []);
+    const userTimeEntriesThisMonth = timeEntries.filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entry.teamMember === CURRENT_USER &&
+               isWithinInterval(entryDate, { start: startOfThisMonth, end: endOfThisMonth });
+    });
+
+    const totalHours = userTimeEntriesThisMonth.reduce((sum, entry) => sum + entry.duration, 0);
+    const hourlyRate = 150;
+    const salary = totalHours * hourlyRate;
+
+    setMonthlyHours(totalHours);
+    setMonthlySalary(salary);
+
+  }, [timeEntries]);
 
   const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
     switch (status) {
@@ -205,6 +220,28 @@ export default function HomePage() {
                                 <span className="text-sm font-bold">{completedCount}/{totalCount}</span>
                             </div>
                             <Progress value={monthlyProgress} className="w-full" />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Monthly Summary</CardTitle>
+                            <CardDescription>Your hours and estimated salary.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Clock className="h-5 w-5" />
+                                    <span>Hours Logged</span>
+                                </div>
+                                <span className="font-bold text-lg">{monthlyHours.toFixed(2)}h</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <DollarSign className="h-5 w-5" />
+                                    <span>Estimated Salary</span>
+                                </div>
+                                <span className="font-bold text-lg">{monthlySalary.toLocaleString()} kr</span>
+                            </div>
                         </CardContent>
                     </Card>
                     <Card>
