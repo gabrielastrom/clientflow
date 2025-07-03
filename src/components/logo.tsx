@@ -11,39 +11,18 @@ export function Logo({ className }: { className?: string }) {
       className={cn("text-primary", className)}
     >
       <path 
-        d="M16 2L29 9.5V24.5L16 32L3 24.5V9.5L16 2Z" 
+        d="M4 16L28 4L20 28L16 16L4 16Z" 
         stroke="currentColor" 
-        strokeWidth="3" 
+        strokeWidth="2.5" 
         strokeLinecap="round" 
-        strokeLinejoin="round"
+        strokeLinejoin="round" 
       />
       <path 
-        d="M16 17L29 9.5" 
+        d="M28 4L16 16" 
         stroke="currentColor" 
-        strokeWidth="3" 
+        strokeWidth="2.5" 
         strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-      <path 
-        d="M16 17V32" 
-        stroke="currentColor" 
-        strokeWidth="3" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-      <path 
-        d="M16 17L3 9.5" 
-        stroke="currentColor" 
-        strokeWidth="3" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
-      />
-      <path 
-        d="M8.5 13.25L23.5 21.75" 
-        stroke="currentColor" 
-        strokeWidth="3" 
-        strokeLinecap="round" 
-        strokeLinejoin="round"
+        strokeLinejoin="round" 
       />
     </svg>
   );
