@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
-            <header className="sticky top-0 z-10 grid h-14 grid-cols-3 items-center border-b bg-background/95 px-4 backdrop-blur-sm md:hidden">
+            <header className="sticky top-0 z-10 grid h-14 grid-cols-3 items-center border-b bg-card px-4 md:hidden">
                 <div className="flex justify-start">
                     <SidebarTrigger asChild>
                     <Button variant="ghost" size="icon">
