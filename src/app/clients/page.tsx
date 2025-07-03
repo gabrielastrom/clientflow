@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +20,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { clients as initialClients } from "@/lib/data";
-import { type Client } from "@/lib/types";
-import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { clients as initialClients, content as initialContent } from "@/lib/data";
+import { type Client, type Content } from "@/lib/types";
+import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,9 +62,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 export default function ClientsPage() {
   const [clients, setClients] = React.useState<Client[]>(initialClients);
+  const [contentList, setContentList] = React.useState<Content[]>(initialContent);
   const [selectedClient, setSelectedClient] = React.useState<Client | null>(
     null
   );
@@ -170,6 +173,21 @@ export default function ClientsPage() {
     });
   };
 
+  const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
+    switch (status) {
+      case 'Done':
+        return 'bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30';
+      case 'In Progress':
+        return 'bg-blue-500/20 text-blue-700 border-blue-500/20 hover:bg-blue-500/30';
+      case 'In Review':
+        return 'bg-yellow-500/20 text-yellow-700 border-yellow-500/20 hover:bg-yellow-500/30';
+      case 'To Do':
+         return 'bg-gray-500/20 text-gray-700 border-gray-500/20 hover:bg-gray-500/30';
+      default:
+        return '';
+    }
+  };
+
   return (
     <AppShell>
       <div className="flex justify-between items-center mb-6">
@@ -193,136 +211,138 @@ export default function ClientsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('name')}>
-                      Client Name
-                      {getSortIcon('name')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('status')}>
-                      Status
-                      {getSortIcon('status')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('contactPerson')}>
-                      Contact Person
-                      {getSortIcon('contactPerson')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('email')}>
-                      Email
-                      {getSortIcon('email')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('phone')}>
-                      Phone
-                      {getSortIcon('phone')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('monthlyVideos')}>
-                      Monthly Videos
-                      {getSortIcon('monthlyVideos')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('joinDate')}>
-                      Join Date
-                      {getSortIcon('joinDate')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedClients.map((client) => (
-                  <TableRow key={client.id}>
-                    <TableCell className="font-medium">{client.name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          client.status === "Active"
-                            ? "default"
-                            : client.status === "Lead"
-                            ? "secondary"
-                            : "outline"
-                        }
-                        className={
-                          client.status === "Active"
-                            ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
-                            : ""
-                        }
-                      >
-                        {client.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{client.contactPerson}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {client.email}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {client.phone}
-                    </TableCell>
-                    <TableCell>{client.monthlyVideos}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {client.joinDate}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup="true"
-                            size="icon"
-                            variant="ghost"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              setSelectedClient(client);
-                              setIsEditOpen(true);
-                            }}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              setSelectedClient(client);
-                              setIsViewOpen(true);
-                            }}
-                          >
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                            onSelect={() => {
-                              setSelectedClient(client);
-                              setIsDeleteAlertOpen(true);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <div className="relative w-full overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('name')}>
+                        Client Name
+                        {getSortIcon('name')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('status')}>
+                        Status
+                        {getSortIcon('status')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('contactPerson')}>
+                        Contact Person
+                        {getSortIcon('contactPerson')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      <Button variant="ghost" onClick={() => requestSort('email')}>
+                        Email
+                        {getSortIcon('email')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      <Button variant="ghost" onClick={() => requestSort('phone')}>
+                        Phone
+                        {getSortIcon('phone')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('monthlyVideos')}>
+                        Monthly Videos
+                        {getSortIcon('monthlyVideos')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                      <Button variant="ghost" onClick={() => requestSort('joinDate')}>
+                        Join Date
+                        {getSortIcon('joinDate')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sortedClients.map((client) => (
+                    <TableRow key={client.id}>
+                      <TableCell className="font-medium">{client.name}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            client.status === "Active"
+                              ? "default"
+                              : client.status === "Lead"
+                              ? "secondary"
+                              : "outline"
+                          }
+                          className={
+                            client.status === "Active"
+                              ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
+                              : ""
+                          }
+                        >
+                          {client.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{client.contactPerson}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {client.email}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {client.phone}
+                      </TableCell>
+                      <TableCell>{client.monthlyVideos}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {client.joinDate}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup="true"
+                              size="icon"
+                              variant="ghost"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                setSelectedClient(client);
+                                setIsEditOpen(true);
+                              }}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                setSelectedClient(client);
+                                setIsViewOpen(true);
+                              }}
+                            >
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onSelect={() => {
+                                setSelectedClient(client);
+                                setIsDeleteAlertOpen(true);
+                              }}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -361,6 +381,86 @@ export default function ClientsPage() {
                 <p>
                   No clients available to document. Add a client to get
                   started.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Client Content</CardTitle>
+            <CardDescription>
+              Content pipeline for each client.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {sortedClients.length > 0 ? (
+              <Tabs defaultValue={sortedClients[0].id} className="w-full">
+                <TabsList className="h-auto flex-wrap justify-start">
+                  {sortedClients.map((client) => (
+                    <TabsTrigger key={client.id} value={client.id}>
+                      {client.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {sortedClients.map((client) => {
+                  const clientContent = contentList.filter(c => c.client === client.name);
+                  return (
+                    <TabsContent key={client.id} value={client.id} className="mt-4">
+                      {clientContent.length > 0 ? (
+                         <div className="relative w-full overflow-auto">
+                           <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Title</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Platform</TableHead>
+                                <TableHead>Deadline</TableHead>
+                                <TableHead>Owner</TableHead>
+                                <TableHead>Link</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {clientContent.map((item) => (
+                                <TableRow key={item.id}>
+                                  <TableCell className="font-medium">{item.title}</TableCell>
+                                  <TableCell>
+                                    <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
+                                      {item.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell>{item.platform}</TableCell>
+                                  <TableCell>{item.deadline}</TableCell>
+                                  <TableCell>{item.owner}</TableCell>
+                                  <TableCell>
+                                    {item.link ? (
+                                      <Button asChild variant="ghost" size="icon">
+                                        <Link href={item.link} target="_blank">
+                                          <ExternalLink className="h-4 w-4" />
+                                        </Link>
+                                      </Button>
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                         </div>
+                      ) : (
+                        <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
+                          <p>No content for {client.name}.</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                  )
+                })}
+              </Tabs>
+            ) : (
+              <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
+                <p>
+                  No clients available to view content for.
                 </p>
               </div>
             )}
