@@ -11,7 +11,7 @@ export function Footer() {
             <span className="font-bold">ClientFlow</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} ClientFlow. All rights reserved.
+            &copy; {new Date().getFullYear()} ClientFlow. A BrandGuys Original.
           </p>
           <div className="flex items-center gap-x-6">
             <Link href="#" className="text-sm font-medium text-muted-foreground hover:text-foreground">
