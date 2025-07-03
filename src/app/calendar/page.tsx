@@ -4,7 +4,7 @@ import * as React from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { appointments as allAppointments, clients as allClients } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal } from "lucide-react";
@@ -13,7 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogDescription as DialogHeaderDescription,
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
@@ -39,21 +39,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { type Appointment } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from "date-fns";
+
 
 export default function CalendarPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>(allAppointments);
   const [date, setDate] = React.useState<Date | undefined>(undefined);
-  const [selectedAppointments, setSelectedAppointments] = React.useState<Appointment[]>([]);
+  const [weeklyAppointments, setWeeklyAppointments] = React.useState<Appointment[]>([]);
+  const [weekDates, setWeekDates] = React.useState<Date[]>([]);
   const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -68,12 +65,19 @@ export default function CalendarPage() {
 
   React.useEffect(() => {
     if (date) {
+      const start = startOfWeek(date);
+      const end = endOfWeek(date);
       const filteredAppointments = appointments.filter(
-        (appt) => new Date(appt.date).toDateString() === date.toDateString()
+        (appt) => {
+            const apptDate = new Date(appt.date);
+            return apptDate >= start && apptDate <= end;
+        }
       );
-      setSelectedAppointments(filteredAppointments);
+      setWeeklyAppointments(filteredAppointments);
+      setWeekDates(eachDayOfInterval({ start, end }));
     } else {
-        setSelectedAppointments([]);
+        setWeeklyAppointments([]);
+        setWeekDates([]);
     }
   }, [date, appointments]);
 
@@ -186,97 +190,108 @@ export default function CalendarPage() {
         <Card className="w-full">
             <CardHeader>
                 <CardTitle>
-                Events for {date ? date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : 'today'}
+                  Weekly Agenda
                 </CardTitle>
+                <CardDescription>
+                  Events and deadlines for the selected week.
+                </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              {selectedAppointments.length > 0 ? (
-                <Carousel
-                  opts={{
-                    align: "start",
-                  }}
-                  className="w-full"
-                >
-                  <CarouselContent className="-ml-4">
-                    {selectedAppointments.map((appt) => (
-                      <CarouselItem
-                        key={appt.id}
-                        className="pl-4 md:basis-1/2 lg:basis-1/3"
-                      >
-                        <div 
-                          className="p-4 rounded-lg bg-muted/50 h-full flex flex-col justify-between cursor-pointer hover:bg-muted"
-                          onClick={() => {
-                            setSelectedAppointment(appt);
-                            setIsViewOpen(true);
-                          }}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-semibold">{appt.title}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(appt.date).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex w-max space-x-6 pb-4">
+                  {weekDates.length > 0 ? weekDates.map((day) => {
+                    const dayAppointments = weeklyAppointments
+                      .filter((appt) => isSameDay(new Date(appt.date), day))
+                      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                    return (
+                      <div key={day.toString()} className="w-[300px] flex-shrink-0">
+                        <h3 className="font-semibold text-md mb-4 sticky top-0 bg-card py-2">{format(day, 'EEEE, MMM d')}</h3>
+                        <div className="space-y-4">
+                          {dayAppointments.length > 0 ? (
+                            dayAppointments.map((appt) => (
+                              <div
+                                key={appt.id}
+                                className="p-4 rounded-lg bg-muted/50 h-full flex flex-col justify-between cursor-pointer hover:bg-muted"
+                                onClick={() => {
+                                  setSelectedAppointment(appt);
+                                  setIsViewOpen(true);
+                                }}
+                              >
+                                <div className="flex justify-between items-start gap-4">
+                                  <div className="whitespace-normal">
+                                    <p className="font-semibold">{appt.title}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {new Date(appt.date).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </p>
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      appt.type === "Deadline"
+                                        ? "destructive"
+                                        : "secondary"
+                                    }
+                                    className="flex-shrink-0"
+                                  >
+                                    {appt.type}
+                                  </Badge>
+                                </div>
+                                <div className="flex justify-end mt-2" onClick={(e) => e.stopPropagation()}>
+                                   <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        aria-haspopup="true"
+                                        size="icon"
+                                        variant="ghost"
+                                      >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Toggle menu</span>
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                      <DropdownMenuItem
+                                        onSelect={() => {
+                                          setSelectedAppointment(appt);
+                                          setIsEditOpen(true);
+                                        }}
+                                      >
+                                        Edit
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                        onSelect={() => {
+                                          setSelectedAppointment(appt);
+                                          setIsDeleteAlertOpen(true);
+                                        }}
+                                      >
+                                        Delete
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-muted-foreground h-24 flex items-center justify-center rounded-lg border-2 border-dashed">
+                              <p>No events scheduled.</p>
                             </div>
-                            <Badge
-                              variant={
-                                appt.type === "Deadline"
-                                  ? "destructive"
-                                  : "secondary"
-                              }
-                            >
-                              {appt.type}
-                            </Badge>
-                          </div>
-                          <div className="flex justify-end mt-2" onClick={(e) => e.stopPropagation()}>
-                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  aria-haspopup="true"
-                                  size="icon"
-                                  variant="ghost"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Toggle menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem
-                                  onSelect={() => {
-                                    setSelectedAppointment(appt);
-                                    setIsEditOpen(true);
-                                  }}
-                                >
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                                  onSelect={() => {
-                                    setSelectedAppointment(appt);
-                                    setIsDeleteAlertOpen(true);
-                                  }}
-                                >
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                          )}
                         </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="left-[-1.5rem] md:left-2" />
-                  <CarouselNext className="right-[-1.5rem] md:right-2" />
-                </Carousel>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  No events scheduled for this day.
-                </p>
-              )}
+                      </div>
+                    )
+                  }) : (
+                    <p className="text-center text-muted-foreground py-8 w-full">
+                      No events scheduled for this week.
+                    </p>
+                  )}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
             </CardContent>
         </Card>
         <Card className="w-full">
@@ -306,7 +321,7 @@ export default function CalendarPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Appointment</DialogTitle>
-            <DialogDescription>Fill in the details for your new event.</DialogDescription>
+            <DialogHeaderDescription>Fill in the details for your new event.</DialogHeaderDescription>
           </DialogHeader>
           <form onSubmit={handleAddSubmit}>
             <div className="grid gap-4 py-4">
@@ -374,7 +389,7 @@ export default function CalendarPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Appointment</DialogTitle>
-            <DialogDescription>Make changes to the appointment.</DialogDescription>
+            <DialogHeaderDescription>Make changes to the appointment.</DialogHeaderDescription>
           </DialogHeader>
           {selectedAppointment && (
             <form onSubmit={handleEditSubmit}>
@@ -444,9 +459,9 @@ export default function CalendarPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{selectedAppointment?.title}</DialogTitle>
-            <DialogDescription>
+            <DialogHeaderDescription>
               {selectedAppointment?.type} on {selectedAppointment && new Date(selectedAppointment.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {selectedAppointment && new Date(selectedAppointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </DialogDescription>
+            </DialogHeaderDescription>
           </DialogHeader>
           {selectedAppointment && (
             <div className="grid gap-4 py-4 text-sm">
