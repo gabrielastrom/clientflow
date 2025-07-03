@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -12,7 +11,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { financialData, appointments as allAppointments, team, timeEntries, content, clients } from "@/lib/data";
 import { type Appointment } from "@/lib/types";
-import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock, Video } from "lucide-react";
+import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -27,7 +26,7 @@ type TeamPerformanceData = {
 export default function DashboardPage() {
   const [todaysAppointments, setTodaysAppointments] = React.useState<Appointment[]>([]);
   const [newClientsThisQuarter, setNewClientsThisQuarter] = React.useState(0);
-  const [totalVideosThisMonth, setTotalVideosThisMonth] = React.useState(0);
+  const [contentCompletionRate, setContentCompletionRate] = React.useState(0);
   const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
 
   React.useEffect(() => {
@@ -49,16 +48,18 @@ export default function DashboardPage() {
     }).length;
     setNewClientsThisQuarter(newClientsCount);
 
-    // Calculate total videos this month
-    const totalVideos = content
-      .filter(c => {
+    // Calculate content completion rate for the month
+    const contentThisMonth = content.filter(c => {
         const deadlineDate = new Date(c.deadline);
-        return c.status === 'Done' &&
-               deadlineDate.getFullYear() === currentYear &&
+        return deadlineDate.getFullYear() === currentYear &&
                deadlineDate.getMonth() === currentMonth;
-      })
-      .length;
-    setTotalVideosThisMonth(totalVideos);
+    });
+    const doneContentThisMonth = contentThisMonth.filter(c => c.status === 'Done').length;
+    const totalContentThisMonth = contentThisMonth.length;
+    const completionRate = totalContentThisMonth > 0
+        ? Math.round((doneContentThisMonth / totalContentThisMonth) * 100)
+        : 0;
+    setContentCompletionRate(completionRate);
 
     // Calculate team performance (hours per member)
     const performanceData = team.map(member => {
@@ -158,16 +159,16 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Videos Produced (Month)
+                Content Completion
               </CardTitle>
-              <Video className="h-4 w-4 text-muted-foreground" />
+              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {totalVideosThisMonth}
+                {contentCompletionRate}%
               </div>
               <p className="text-xs text-muted-foreground">
-                Completed this month
+                Of this month's content is Done
               </p>
             </CardContent>
           </Card>
