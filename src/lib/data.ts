@@ -17,10 +17,10 @@ export const team: TeamMember[] = [
 
 const today = new Date();
 export const appointments: Appointment[] = [
-    { id: '1', title: 'Content Strategy Meeting with Glamour Inc.', date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0), type: 'Meeting', clientId: '1' },
-    { id: '2', title: 'Design new posts for Peak Fitness', date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0), type: 'Task', clientId: '2' },
-    { id: '3', title: 'Peak Fitness campaign launch', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2), type: 'Deadline', clientId: '2' },
-    { id: '4', title: 'Follow up with Innovate Tech', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 11, 0), type: 'Meeting', clientId: '4'},
+    { id: '1', title: 'Content Strategy Meeting with Glamour Inc.', date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 0), type: 'Meeting', clientId: '1', location: 'Online / Google Meet', assignedPersons: ['Alex Doe', 'Casey Jordan'], comments: 'Prepare Q3 content plan.' },
+    { id: '2', title: 'Design new posts for Peak Fitness', date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0), type: 'Task', clientId: '2', assignedPersons: ['Taylor Morgan'], comments: 'Focus on video content.' },
+    { id: '3', title: 'Peak Fitness campaign launch', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2), type: 'Deadline', clientId: '2', assignedPersons: ['Casey Jordan', 'Alex Ray'], location: 'Remote' },
+    { id: '4', title: 'Follow up with Innovate Tech', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 11, 0), type: 'Meeting', clientId: '4', location: 'Client Office', assignedPersons: ['Alex Doe'], comments: 'Discuss contract details.' },
 ];
 
 export const timeEntries: TimeEntry[] = [

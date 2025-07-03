@@ -10,11 +10,14 @@ export type Client = {
 };
 
 export type Appointment = {
-  id: string;
+  id:string;
   title: string;
   date: Date;
   type: 'Meeting' | 'Deadline' | 'Task';
   clientId?: string;
+  location?: string;
+  assignedPersons?: string[];
+  comments?: string;
 };
 
 export type TimeEntry = {

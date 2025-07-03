@@ -4,8 +4,8 @@ import * as React from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { appointments as allAppointments } from "@/lib/data";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { appointments as allAppointments, clients as allClients } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal } from "lucide-react";
 import {
@@ -16,7 +16,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -49,6 +48,7 @@ import {
 } from "@/components/ui/carousel";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function CalendarPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>(allAppointments);
@@ -57,6 +57,7 @@ export default function CalendarPage() {
   const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isViewOpen, setIsViewOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const { toast } = useToast();
 
@@ -89,6 +90,10 @@ export default function CalendarPage() {
       title: formData.get("title") as string,
       date: new Date(year, month - 1, day, hours, minutes),
       type: formData.get("type") as Appointment["type"],
+      clientId: formData.get("client") as string,
+      location: formData.get("location") as string,
+      assignedPersons: (formData.get("assignedPersons") as string).split(',').map(s => s.trim()).filter(Boolean),
+      comments: formData.get("comments") as string,
     };
     
     setAppointments((prev) => [newAppointment, ...prev]);
@@ -111,6 +116,10 @@ export default function CalendarPage() {
       title: formData.get("title") as string,
       date: new Date(year, month - 1, day, hours, minutes),
       type: formData.get("type") as Appointment["type"],
+      clientId: formData.get("client") as string,
+      location: formData.get("location") as string,
+      assignedPersons: (formData.get("assignedPersons") as string).split(',').map(s => s.trim()).filter(Boolean),
+      comments: formData.get("comments") as string,
     };
 
     setAppointments(
@@ -194,7 +203,13 @@ export default function CalendarPage() {
                         key={appt.id}
                         className="pl-4 md:basis-1/2 lg:basis-1/3"
                       >
-                        <div className="p-4 rounded-lg bg-muted/50 h-full flex flex-col justify-between">
+                        <div 
+                          className="p-4 rounded-lg bg-muted/50 h-full flex flex-col justify-between cursor-pointer hover:bg-muted"
+                          onClick={() => {
+                            setSelectedAppointment(appt);
+                            setIsViewOpen(true);
+                          }}
+                        >
                           <div className="flex justify-between items-start">
                             <div>
                               <p className="font-semibold">{appt.title}</p>
@@ -215,7 +230,7 @@ export default function CalendarPage() {
                               {appt.type}
                             </Badge>
                           </div>
-                          <div className="flex justify-end mt-2">
+                          <div className="flex justify-end mt-2" onClick={(e) => e.stopPropagation()}>
                              <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -308,6 +323,19 @@ export default function CalendarPage() {
                 <Input id="time" name="time" type="time" defaultValue={"12:00"} className="col-span-3" required/>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="client" className="text-right">Client</Label>
+                <Select name="client">
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allClients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="type" className="text-right">Type</Label>
                   <Select name="type" defaultValue="Meeting">
                     <SelectTrigger className="col-span-3">
@@ -319,7 +347,19 @@ export default function CalendarPage() {
                       <SelectItem value="Deadline">Deadline</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="location" className="text-right">Location</Label>
+                <Input id="location" name="location" placeholder="e.g. Online" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="assignedPersons" className="text-right">Assigned To</Label>
+                <Input id="assignedPersons" name="assignedPersons" placeholder="Comma-separated names" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="comments" className="text-right">Comments</Label>
+                <Textarea id="comments" name="comments" placeholder="Add comments..." className="col-span-3" />
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
@@ -352,6 +392,19 @@ export default function CalendarPage() {
                   <Input id="time" name="time" type="time" defaultValue={selectedAppointment.date?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} className="col-span-3" required/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="client" className="text-right">Client</Label>
+                  <Select name="client" defaultValue={selectedAppointment.clientId}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="type" className="text-right">Type</Label>
                     <Select name="type" defaultValue={selectedAppointment.type}>
                       <SelectTrigger className="col-span-3">
@@ -363,7 +416,19 @@ export default function CalendarPage() {
                         <SelectItem value="Deadline">Deadline</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="location" className="text-right">Location</Label>
+                  <Input id="location" name="location" defaultValue={selectedAppointment.location} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="assignedPersons" className="text-right">Assigned To</Label>
+                  <Input id="assignedPersons" name="assignedPersons" defaultValue={selectedAppointment.assignedPersons?.join(', ')} className="col-span-3" placeholder="Comma-separated names" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="comments" className="text-right">Comments</Label>
+                  <Textarea id="comments" name="comments" defaultValue={selectedAppointment.comments} placeholder="Add comments..." className="col-span-3" />
+                </div>
               </div>
               <DialogFooter>
                 <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
@@ -373,6 +438,67 @@ export default function CalendarPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* View Appointment Dialog */}
+      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{selectedAppointment?.title}</DialogTitle>
+            <DialogDescription>
+              {selectedAppointment?.type} on {selectedAppointment && new Date(selectedAppointment.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {selectedAppointment && new Date(selectedAppointment.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="grid gap-4 py-4 text-sm">
+              {selectedAppointment.clientId && (
+                <div className="grid grid-cols-3 items-center gap-2">
+                  <Label className="text-muted-foreground">Client</Label>
+                  <p className="col-span-2 font-medium">
+                    {allClients.find(c => c.id === selectedAppointment.clientId)?.name || 'N/A'}
+                  </p>
+                </div>
+              )}
+              {selectedAppointment.location && (
+                <div className="grid grid-cols-3 items-center gap-2">
+                  <Label className="text-muted-foreground">Location</Label>
+                  <p className="col-span-2 font-medium">
+                    {selectedAppointment.location}
+                  </p>
+                </div>
+              )}
+              {selectedAppointment.assignedPersons && selectedAppointment.assignedPersons.length > 0 && (
+                <div className="grid grid-cols-3 items-start gap-2">
+                  <Label className="text-muted-foreground mt-1">Assigned</Label>
+                  <div className="col-span-2 flex flex-wrap gap-1">
+                    {selectedAppointment.assignedPersons.map(person => (
+                      <Badge key={person} variant="secondary">{person}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {selectedAppointment.comments && (
+                <div className="grid grid-cols-3 items-start gap-2">
+                  <Label htmlFor="comments-view" className="text-muted-foreground">Comments</Label>
+                  <Textarea
+                    id="comments-view"
+                    readOnly
+                    defaultValue={selectedAppointment.comments}
+                    className="col-span-2"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                Close
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {/* Delete Appointment Alert */}
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
