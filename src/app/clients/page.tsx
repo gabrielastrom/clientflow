@@ -59,6 +59,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function ClientsPage() {
   const [clients, setClients] = React.useState<Client[]>(initialClients);
@@ -70,8 +72,16 @@ export default function ClientsPage() {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: keyof Client; direction: 'ascending' | 'descending' } | null>(null);
+  const [clientNotes, setClientNotes] = React.useState<Record<string, string>>({});
 
   const { toast } = useToast();
+
+  const handleNoteChange = (clientId: string, note: string) => {
+    setClientNotes((prevNotes) => ({
+      ...prevNotes,
+      [clientId]: note,
+    }));
+  };
 
   const sortedClients = React.useMemo(() => {
     let sortableItems = [...clients];
@@ -174,7 +184,7 @@ export default function ClientsPage() {
           Add Client
         </Button>
       </div>
-      <div className="grid">
+      <div className="grid gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Client List</CardTitle>
@@ -315,8 +325,49 @@ export default function ClientsPage() {
             </Table>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Documentation</CardTitle>
+            <CardDescription>
+              Client-specific notes and documentation. Select a client to view
+              or edit their notes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {sortedClients.length > 0 ? (
+              <Tabs defaultValue={sortedClients[0].id} className="w-full">
+                <TabsList className="h-auto flex-wrap justify-start">
+                  {sortedClients.map((client) => (
+                    <TabsTrigger key={client.id} value={client.id}>
+                      {client.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {sortedClients.map((client) => (
+                  <TabsContent key={client.id} value={client.id}>
+                    <Textarea
+                      placeholder={`Notes for ${client.name}...`}
+                      className="mt-4 h-48 resize-none"
+                      value={clientNotes[client.id] || ""}
+                      onChange={(e) =>
+                        handleNoteChange(client.id, e.target.value)
+                      }
+                    />
+                  </TabsContent>
+                ))}
+              </Tabs>
+            ) : (
+              <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
+                <p>
+                  No clients available to document. Add a client to get
+                  started.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-      
+
       {/* Add Client Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent>
@@ -326,49 +377,91 @@ export default function ClientsPage() {
               Fill in the details for the new client.
             </DialogDescription>
           </DialogHeader>
-            <form onSubmit={handleAddSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Name</Label>
-                  <Input id="name" name="name" className="col-span-3" required/>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="contactPerson" className="text-right">Contact</Label>
-                  <Input id="contactPerson" name="contactPerson" className="col-span-3" required/>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">Email</Label>
-                  <Input id="email" name="email" type="email" className="col-span-3" required/>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="phone" className="text-right">Phone</Label>
-                  <Input id="phone" name="phone" className="col-span-3" required/>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="monthlyVideos" className="text-right">Monthly Videos</Label>
-                  <Input id="monthlyVideos" name="monthlyVideos" type="number" defaultValue={0} className="col-span-3" required/>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">Status</Label>
-                  <Select name="status" defaultValue="Lead">
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Inactive">Inactive</SelectItem>
-                      <SelectItem value="Lead">Lead</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <form onSubmit={handleAddSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  className="col-span-3"
+                  required
+                />
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
-                <Button type="submit">Add Client</Button>
-              </DialogFooter>
-            </form>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="contactPerson" className="text-right">
+                  Contact
+                </Label>
+                <Input
+                  id="contactPerson"
+                  name="contactPerson"
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">
+                  Phone
+                </Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="monthlyVideos" className="text-right">
+                  Monthly Videos
+                </Label>
+                <Input
+                  id="monthlyVideos"
+                  name="monthlyVideos"
+                  type="number"
+                  defaultValue={0}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
+                <Select name="status" defaultValue="Lead">
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select a status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Lead">Lead</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button type="button" variant="secondary">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit">Add Client</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -384,24 +477,18 @@ export default function ClientsPage() {
           {selectedClient && (
             <div className="grid gap-4 py-4 text-sm">
               <div className="grid grid-cols-3 items-center gap-2">
-                <Label className="text-muted-foreground">
-                  Contact Person
-                </Label>
+                <Label className="text-muted-foreground">Contact Person</Label>
                 <p className="col-span-2 font-medium">
                   {selectedClient.contactPerson}
                 </p>
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
                 <Label className="text-muted-foreground">Email</Label>
-                <p className="col-span-2 font-medium">
-                  {selectedClient.email}
-                </p>
+                <p className="col-span-2 font-medium">{selectedClient.email}</p>
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
                 <Label className="text-muted-foreground">Phone</Label>
-                <p className="col-span-2 font-medium">
-                  {selectedClient.phone}
-                </p>
+                <p className="col-span-2 font-medium">{selectedClient.phone}</p>
               </div>
               <div className="grid grid-cols-3 items-center gap-2">
                 <Label className="text-muted-foreground">Monthly Videos</Label>
@@ -456,27 +543,67 @@ export default function ClientsPage() {
             <form onSubmit={handleEditSubmit}>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Name</Label>
-                  <Input id="name" name="name" defaultValue={selectedClient.name} className="col-span-3"/>
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={selectedClient.name}
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="contactPerson" className="text-right">Contact</Label>
-                  <Input id="contactPerson" name="contactPerson" defaultValue={selectedClient.contactPerson} className="col-span-3"/>
+                  <Label htmlFor="contactPerson" className="text-right">
+                    Contact
+                  </Label>
+                  <Input
+                    id="contactPerson"
+                    name="contactPerson"
+                    defaultValue={selectedClient.contactPerson}
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="email" className="text-right">Email</Label>
-                  <Input id="email" name="email" type="email" defaultValue={selectedClient.email} className="col-span-3"/>
+                  <Label htmlFor="email" className="text-right">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    defaultValue={selectedClient.email}
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="phone" className="text-right">Phone</Label>
-                  <Input id="phone" name="phone" defaultValue={selectedClient.phone} className="col-span-3"/>
+                  <Label htmlFor="phone" className="text-right">
+                    Phone
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    defaultValue={selectedClient.phone}
+                    className="col-span-3"
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="monthlyVideos" className="text-right">Monthly Videos</Label>
-                  <Input id="monthlyVideos" name="monthlyVideos" type="number" defaultValue={selectedClient.monthlyVideos} className="col-span-3" required/>
+                  <Label htmlFor="monthlyVideos" className="text-right">
+                    Monthly Videos
+                  </Label>
+                  <Input
+                    id="monthlyVideos"
+                    name="monthlyVideos"
+                    type="number"
+                    defaultValue={selectedClient.monthlyVideos}
+                    className="col-span-3"
+                    required
+                  />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">Status</Label>
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
                   <Select name="status" defaultValue={selectedClient.status}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a status" />
@@ -491,7 +618,9 @@ export default function ClientsPage() {
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancel</Button>
+                  <Button type="button" variant="secondary">
+                    Cancel
+                  </Button>
                 </DialogClose>
                 <Button type="submit">Save Changes</Button>
               </DialogFooter>
@@ -501,10 +630,7 @@ export default function ClientsPage() {
       </Dialog>
 
       {/* Delete Client Alert */}
-      <AlertDialog
-        open={isDeleteAlertOpen}
-        onOpenChange={setIsDeleteAlertOpen}
-      >
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
