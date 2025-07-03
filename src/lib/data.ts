@@ -1,4 +1,4 @@
-import type { Client, Appointment, TimeEntry, TeamMember, Revenue } from './types';
+import type { Client, Appointment, TimeEntry, TeamMember, Revenue, Content } from './types';
 
 export const clients: Client[] = [
   { id: '1', name: 'Glamour Inc.', contactPerson: 'Jessica Day', email: 'jessica.day@glamour.com', phone: '555-0101', status: 'Active', joinDate: '2023-01-15' },
@@ -38,6 +38,15 @@ export const revenues: Revenue[] = [
     { id: '3', revenue: 4500, month: 'June 2024', client: 'Glamour Inc.', comment: 'Monthly Retainer' },
     { id: '4', revenue: 7000, month: 'June 2024', client: 'Peak Fitness', comment: 'Campaign Management Fee' },
     { id: '5', revenue: 3000, month: 'June 2024', client: 'Artisan Bakes', comment: 'Initial Project Fee' },
+];
+
+export const content: Content[] = [
+  { id: '1', title: 'Summer Campaign Launch Video', client: 'Glamour Inc.', status: 'In Progress', platform: 'Instagram', deadline: '2024-08-15', owner: 'Casey Jordan' },
+  { id: '2', title: '10 Healthy Breakfast Ideas', client: 'Peak Fitness', status: 'To Do', platform: 'TikTok', deadline: '2024-08-10', owner: 'Alex Ray', link: 'https://example.com/draft1' },
+  { id: '3', title: 'Behind the Scenes at the Roastery', client: 'The Coffee House', status: 'Done', platform: 'Instagram', deadline: '2024-07-28', owner: 'Taylor Morgan', link: 'https://instagram.com/p/12345' },
+  { id: '4', title: 'New Feature Announcement', client: 'Innovate Tech', status: 'In Review', platform: 'X', deadline: '2024-08-05', owner: 'Casey Jordan' },
+  { id: '5', title: 'Weekly Special: Croissant-Muffin', client: 'Artisan Bakes', status: 'In Progress', platform: 'Facebook', deadline: '2024-08-01', owner: 'Alex Ray', link: 'https://example.com/draft2' },
+  { id: '6', title: 'Q3 Results Infographic', client: 'Glamour Inc.', status: 'To Do', platform: 'X', deadline: '2024-09-01', owner: 'Taylor Morgan' },
 ];
 
 export const financialData = {

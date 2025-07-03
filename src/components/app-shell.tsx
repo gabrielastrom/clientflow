@@ -43,7 +43,7 @@ const navItems = [
   { href: "/clients", icon: Users, label: "Clients" },
   { href: "/team", icon: Briefcase, label: "Team" },
   { href: "/finance", icon: Banknote, label: "Finance" },
-  { href: "/content", icon: Lightbulb, label: "Content Planner" },
+  { href: "/content", icon: Lightbulb, label: "Content" },
   { href: "/tracking", icon: Clock, label: "Time Tracking" },
 ];
 
