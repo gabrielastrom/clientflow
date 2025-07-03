@@ -34,11 +34,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { content as allContent, clients, timeEntries as initialTimeEntries, teamMembers } from "@/lib/data";
-import { type Content, type TimeEntry } from "@/lib/types";
+import { content as allContent, clients, timeEntries as initialTimeEntries, teamMembers, appointments as allAppointments } from "@/lib/data";
+import { type Content, type TimeEntry, type Appointment } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format } from 'date-fns';
+import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
 
 // Hardcoded current user for demonstration purposes
@@ -57,6 +58,8 @@ export default function HomePage() {
   const [defaultDate, setDefaultDate] = React.useState("");
   const [monthlyHours, setMonthlyHours] = React.useState(0);
   const [monthlySalary, setMonthlySalary] = React.useState(0);
+  const [weeklyAppointments, setWeeklyAppointments] = React.useState<Appointment[]>([]);
+  const [weekDates, setWeekDates] = React.useState<Date[]>([]);
 
   const { toast } = useToast();
 
@@ -70,6 +73,7 @@ export default function HomePage() {
     const startOfThisMonth = startOfMonth(today);
     const endOfThisMonth = endOfMonth(today);
 
+    // Filter user tasks
     const userContent = content.filter(item => item.owner === CURRENT_USER);
     
     const weekTasks = userContent.filter(item => {
@@ -100,6 +104,15 @@ export default function HomePage() {
         setMonthlyProgress(0);
     }
 
+    // Filter weekly appointments
+    const filteredAppointments = allAppointments.filter(
+      (appt) => isWithinInterval(new Date(appt.date), { start: startOfThisWeek, end: endOfThisWeek })
+    ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    setWeeklyAppointments(filteredAppointments);
+    setWeekDates(eachDayOfInterval({ start: startOfThisWeek, end: endOfThisWeek }));
+
+
+    // Calculate monthly time entries and salary
     const userTimeEntriesThisMonth = timeEntries.filter(entry => {
         const entryDate = new Date(entry.date);
         return entry.teamMember === CURRENT_USER &&
@@ -205,7 +218,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-2 space-y-6">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
@@ -230,6 +243,64 @@ export default function HomePage() {
                                     <TaskList tasks={monthlyTasks} />
                                 </TabsContent>
                             </Tabs>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Weekly Agenda</CardTitle>
+                            <CardDescription>Your tasks and appointments for this week.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pr-0">
+                            <ScrollArea className="h-[290px]">
+                              <div className="space-y-6 pr-6">
+                                {weekDates.map((day) => {
+                                  const dayAppointments = weeklyAppointments.filter((appt) =>
+                                    isSameDay(new Date(appt.date), day)
+                                  );
+
+                                  if (dayAppointments.length === 0) {
+                                    return null;
+                                  }
+
+                                  return (
+                                    <div key={day.toString()}>
+                                      <h3 className="font-semibold text-sm mb-3 sticky top-0 bg-card py-2 z-10">
+                                        {format(day, 'EEEE, MMM d')}
+                                      </h3>
+                                      <div className="space-y-4">
+                                        {dayAppointments.map((appt) => (
+                                          <div key={appt.id} className="flex items-start gap-4 text-sm">
+                                            <div className="flex flex-col items-center w-16 flex-shrink-0">
+                                              <p className="font-semibold text-primary">{format(new Date(appt.date), 'HH:mm')}</p>
+                                              <Badge
+                                                variant={appt.type === "Deadline" ? "destructive" : "secondary"}
+                                                className="mt-1"
+                                              >
+                                                {appt.type}
+                                              </Badge>
+                                            </div>
+                                            <div className="border-l pl-4 flex-1">
+                                              <p className="font-medium">{appt.title}</p>
+                                              {appt.clientId && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    {clients.find(c => c.id === appt.clientId)?.name}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {weeklyAppointments.length === 0 && (
+                                  <div className="flex h-full min-h-[290px] items-center justify-center text-muted-foreground">
+                                      <p>No appointments for this week.</p>
+                                  </div>
+                                )}
+                              </div>
+                            </ScrollArea>
                         </CardContent>
                     </Card>
                 </div>
