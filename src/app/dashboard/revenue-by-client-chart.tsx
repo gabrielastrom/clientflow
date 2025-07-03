@@ -49,8 +49,8 @@ export default function RevenueByClientChart() {
             dataKey="revenue"
             nameKey="name"
             innerRadius="60%"
-            strokeWidth={5}
-            stroke="hsl(var(--background))"
+            strokeWidth={2}
+            stroke="hsl(var(--card))"
           >
             {chartData.map((entry) => (
               <Cell key={entry.name} fill={entry.fill} />
