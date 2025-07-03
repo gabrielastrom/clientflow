@@ -61,6 +61,9 @@ export default function HomePage() {
   const [weeklyAppointments, setWeeklyAppointments] = React.useState<Appointment[]>([]);
   const [weekDates, setWeekDates] = React.useState<Date[]>([]);
 
+  const [selectedTask, setSelectedTask] = React.useState<Content | null>(null);
+  const [isTaskStatusModalOpen, setIsTaskStatusModalOpen] = React.useState(false);
+
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -181,15 +184,44 @@ export default function HomePage() {
     setIsAddTaskOpen(false);
     toast({ title: "Success", description: "Task added successfully." });
   };
+  
+  const handleTaskClick = (task: Content) => {
+    setSelectedTask(task);
+    setIsTaskStatusModalOpen(true);
+  };
 
-  const TaskList = ({ tasks }: { tasks: Content[] }) => {
+  const handleStatusUpdateSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedTask) return;
+
+    const formData = new FormData(event.currentTarget);
+    const newStatus = formData.get("status") as Content["status"];
+
+    const updatedContent = content.map(item => 
+      item.id === selectedTask.id ? { ...item, status: newStatus } : item
+    );
+    setContent(updatedContent);
+
+    setIsTaskStatusModalOpen(false);
+    setSelectedTask(null);
+    toast({
+      title: "Status Updated",
+      description: `Task "${selectedTask.title}" has been updated to "${newStatus}".`,
+    });
+  };
+
+  const TaskList = ({ tasks, onTaskClick }: { tasks: Content[], onTaskClick: (task: Content) => void }) => {
     if (tasks.length === 0) {
       return <p className="text-muted-foreground text-center p-8">No tasks for this period. Great job!</p>;
     }
     return (
       <div className="space-y-4">
         {tasks.map(task => (
-          <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+          <div 
+            key={task.id} 
+            className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+            onClick={() => onTaskClick(task)}
+          >
             <div>
               <p className="font-semibold">{task.title}</p>
               <p className="text-sm text-muted-foreground">{task.client} - Deadline: {format(new Date(task.deadline), 'MMM dd')}</p>
@@ -236,10 +268,10 @@ export default function HomePage() {
                                     <TabsTrigger value="month">This Month</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="week" className="mt-4">
-                                    <TaskList tasks={weeklyTasks} />
+                                    <TaskList tasks={weeklyTasks} onTaskClick={handleTaskClick} />
                                 </TabsContent>
                                 <TabsContent value="month" className="mt-4">
-                                    <TaskList tasks={monthlyTasks} />
+                                    <TaskList tasks={monthlyTasks} onTaskClick={handleTaskClick} />
                                 </TabsContent>
                             </Tabs>
                         </CardContent>
@@ -495,6 +527,48 @@ export default function HomePage() {
                 <Button type="submit">Add Task</Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Update Task Status Dialog */}
+        <Dialog open={isTaskStatusModalOpen} onOpenChange={setIsTaskStatusModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Update Task Status</DialogTitle>
+              <DialogDescription>
+                Update the status for the task: "{selectedTask?.title}".
+              </DialogDescription>
+            </DialogHeader>
+            {selectedTask && (
+              <form onSubmit={handleStatusUpdateSubmit}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="status" className="text-right">
+                      Status
+                    </Label>
+                    <Select name="status" defaultValue={selectedTask.status}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="To Do">To Do</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="In Review">In Review</SelectItem>
+                        <SelectItem value="Done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            )}
           </DialogContent>
         </Dialog>
     </AppShell>
