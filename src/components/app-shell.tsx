@@ -60,7 +60,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar className="border-r bg-card">
           <SidebarHeader className="p-4 flex flex-row items-center justify-between group-data-[collapsible=icon]:p-2 group-data-[collapsible=icon]:justify-center">
             <Link
-              href="/dashboard"
+              href="/home"
               className="flex items-center gap-2 group-data-[collapsible=icon]:hidden"
             >
               <Logo />
@@ -112,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex justify-center">
                     <Link
-                    href="/dashboard"
+                    href="/home"
                     className="flex items-center gap-2"
                     >
                     <Logo />
