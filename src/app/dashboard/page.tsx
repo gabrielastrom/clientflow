@@ -15,6 +15,9 @@ import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp, UserPlus, Clock }
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from 'date-fns';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 type TeamPerformanceData = {
   id: string;
@@ -25,7 +28,8 @@ type TeamPerformanceData = {
 
 
 export default function DashboardPage() {
-  const [todaysAppointments, setTodaysAppointments] = React.useState<Appointment[]>([]);
+  const [weeklyAppointments, setWeeklyAppointments] = React.useState<Appointment[]>([]);
+  const [weekDates, setWeekDates] = React.useState<Date[]>([]);
   const [newClientsThisQuarter, setNewClientsThisQuarter] = React.useState(0);
   const [doneContentCount, setDoneContentCount] = React.useState(0);
   const [totalContentCount, setTotalContentCount] = React.useState(0);
@@ -37,11 +41,17 @@ export default function DashboardPage() {
     const currentYear = today.getFullYear();
     const currentQuarter = Math.floor(currentMonth / 3);
 
-    // Calculate today's appointments
+    // Calculate weekly appointments
+    const start = startOfWeek(today, { weekStartsOn: 1 });
+    const end = endOfWeek(today, { weekStartsOn: 1 });
     const filteredAppointments = allAppointments.filter(
-      (appt) => new Date(appt.date).toDateString() === today.toDateString()
-    );
-    setTodaysAppointments(filteredAppointments);
+      (appt) => {
+          const apptDate = new Date(appt.date);
+          return apptDate >= start && apptDate <= end;
+      }
+    ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    setWeeklyAppointments(filteredAppointments);
+    setWeekDates(eachDayOfInterval({ start, end }));
 
     // Calculate new clients this quarter
     const newClientsCount = clients.filter(client => {
@@ -185,27 +195,59 @@ export default function DashboardPage() {
             </Card>
             <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle>Daily Agenda</CardTitle>
-                    <CardDescription>Your tasks and appointments for today.</CardDescription>
+                    <CardTitle>Weekly Agenda</CardTitle>
+                    <CardDescription>Your tasks and appointments for this week.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <ul className="space-y-4">
-                        {todaysAppointments.length > 0 ? (
-                            todaysAppointments.map(appt => (
-                                <li key={appt.id} className="flex items-start gap-3">
-                                    <div className="mt-1">
-                                      {appt.type === 'Task' ? <Circle className="h-5 w-5 text-muted-foreground" /> : <CheckCircle2 className="h-5 w-5 text-primary" />}
+                <CardContent className="pr-0">
+                    <ScrollArea className="h-[290px]">
+                      <div className="space-y-6 pr-6">
+                        {weekDates.map((day) => {
+                          const dayAppointments = weeklyAppointments.filter((appt) =>
+                            isSameDay(new Date(appt.date), day)
+                          );
+
+                          if (dayAppointments.length === 0) {
+                            return null;
+                          }
+
+                          return (
+                            <div key={day.toString()}>
+                              <h3 className="font-semibold text-sm mb-3 sticky top-0 bg-card py-2 z-10">
+                                {format(day, 'EEEE, MMM d')}
+                              </h3>
+                              <div className="space-y-4">
+                                {dayAppointments.map((appt) => (
+                                  <div key={appt.id} className="flex items-start gap-4 text-sm">
+                                    <div className="flex flex-col items-center w-16 flex-shrink-0">
+                                      <p className="font-semibold text-primary">{format(new Date(appt.date), 'HH:mm')}</p>
+                                      <Badge
+                                        variant={appt.type === "Deadline" ? "destructive" : "secondary"}
+                                        className="mt-1"
+                                      >
+                                        {appt.type}
+                                      </Badge>
                                     </div>
-                                    <div>
-                                        <p className="font-medium">{appt.title}</p>
-                                        <p className="text-sm text-muted-foreground">{new Date(appt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <div className="border-l pl-4 flex-1">
+                                      <p className="font-medium">{appt.title}</p>
+                                      {appt.clientId && (
+                                        <p className="text-xs text-muted-foreground">
+                                            {clients.find(c => c.id === appt.clientId)?.name}
+                                        </p>
+                                      )}
                                     </div>
-                                </li>
-                            ))
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center py-4">No appointments or tasks for today. Enjoy your day!</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {weeklyAppointments.length === 0 && (
+                          <div className="flex h-full min-h-[290px] items-center justify-center text-muted-foreground">
+                              <p>No appointments for this week.</p>
+                          </div>
                         )}
-                    </ul>
+                      </div>
+                    </ScrollArea>
                 </CardContent>
             </Card>
         </div>
