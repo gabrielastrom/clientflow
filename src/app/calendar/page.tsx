@@ -52,7 +52,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function CalendarPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>(allAppointments);
-  const [date, setDate] = React.useState<Date | undefined>();
+  const [date, setDate] = React.useState<Date | undefined>(undefined);
   const [selectedAppointments, setSelectedAppointments] = React.useState<Appointment[]>([]);
   const [selectedAppointment, setSelectedAppointment] = React.useState<Appointment | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
@@ -61,10 +61,9 @@ export default function CalendarPage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    if (!date) {
-      setDate(new Date());
-    }
-  }, [date]);
+    // Set date on client-side to avoid hydration mismatch
+    setDate(new Date());
+  }, []);
 
   React.useEffect(() => {
     if (date) {
@@ -132,26 +131,34 @@ export default function CalendarPage() {
     });
   };
 
-  function DayContentWithDot(props: { date: Date; activeModifiers: Record<string, boolean> }) {
-    const hasAppointment = appointments.some(
-      (appt) => new Date(appt.date).toDateString() === props.date.toDateString()
-    );
+  const DayContentWithDot = React.useCallback(
+    (props: { date: Date; activeModifiers: Record<string, boolean> }) => {
+      const hasAppointment = appointments.some(
+        (appt) => new Date(appt.date).toDateString() === props.date.toDateString()
+      );
+    
+      return (
+        <div className="relative flex h-full w-full items-center justify-center">
+          {props.date.getDate()}
+          {hasAppointment && (
+            <div
+              className={cn(
+                "absolute bottom-1.5 h-1.5 w-1.5 rounded-full",
+                props.activeModifiers.selected
+                  ? "bg-primary-foreground"
+                  : "bg-primary"
+              )}
+            />
+          )}
+        </div>
+      );
+    },
+    [appointments]
+  );
   
-    return (
-      <div className="relative flex h-full w-full items-center justify-center">
-        {props.date.getDate()}
-        {hasAppointment && (
-          <div
-            className={cn(
-              "absolute bottom-1.5 h-1.5 w-1.5 rounded-full",
-              props.activeModifiers.selected
-                ? "bg-primary-foreground"
-                : "bg-primary"
-            )}
-          />
-        )}
-      </div>
-    );
+  if (!date) {
+    // Render nothing or a loading spinner on the server and initial client render
+    return null; 
   }
 
   return (
