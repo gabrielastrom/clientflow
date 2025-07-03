@@ -22,6 +22,8 @@ import {
   Lightbulb,
   Clock,
   Settings,
+  Briefcase,
+  Banknote,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +41,8 @@ const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/calendar", icon: Calendar, label: "Calendar" },
   { href: "/clients", icon: Users, label: "Clients" },
+  { href: "/team", icon: Briefcase, label: "Team" },
+  { href: "/finance", icon: Banknote, label: "Finance" },
   { href: "/content", icon: Lightbulb, label: "Content Planner" },
   { href: "/tracking", icon: Clock, label: "Time Tracking" },
 ];

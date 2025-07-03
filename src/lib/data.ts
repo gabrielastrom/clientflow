@@ -1,4 +1,4 @@
-import type { Client, Appointment, TimeEntry } from './types';
+import type { Client, Appointment, TimeEntry, TeamMember, Revenue } from './types';
 
 export const clients: Client[] = [
   { id: '1', name: 'Glamour Inc.', contactPerson: 'Jessica Day', email: 'jessica.day@glamour.com', phone: '555-0101', status: 'Active', joinDate: '2023-01-15' },
@@ -6,6 +6,13 @@ export const clients: Client[] = [
   { id: '3', name: 'The Coffee House', contactPerson: 'Sarah Lee', email: 'sarah.l@coffeehouse.com', phone: '555-0103', status: 'Inactive', joinDate: '2022-11-10' },
   { id: '4', name: 'Innovate Tech', contactPerson: 'David Chen', email: 'david.c@innovate.tech', phone: '555-0104', status: 'Lead', joinDate: '2024-05-01' },
   { id: '5', name: 'Artisan Bakes', contactPerson: 'Emily White', email: 'emily.w@artisanbakes.com', phone: '555-0105', status: 'Active', joinDate: '2023-08-01' },
+];
+
+export const team: TeamMember[] = [
+    { id: '1', name: 'Alex Doe', email: 'alex@clientflow.com', phone: '555-0201', role: 'Manager', assignedClients: ['Glamour Inc.', 'Peak Fitness'] },
+    { id: '2', name: 'Casey Jordan', email: 'casey@clientflow.com', phone: '555-0202', role: 'Strategist', assignedClients: ['Peak Fitness', 'The Coffee House'] },
+    { id: '3', name: 'Taylor Morgan', email: 'taylor@clientflow.com', phone: '555-0203', role: 'Designer', assignedClients: ['Glamour Inc.', 'Artisan Bakes'] },
+    { id: '4', name: 'Alex Ray', email: 'ray@clientflow.com', phone: '555-0204', role: 'Designer', assignedClients: ['Innovate Tech', 'The Coffee House'] },
 ];
 
 const today = new Date();
@@ -23,7 +30,15 @@ export const timeEntries: TimeEntry[] = [
     { id: '4', date: '2024-07-20', teamMember: 'Taylor Morgan', client: 'Glamour Inc.', task: 'Client Meeting', duration: '1h 0m' },
 ];
 
-export const teamMembers: string[] = ['Alex Ray', 'Casey Jordan', 'Taylor Morgan', 'Alex Doe'];
+export const teamMembers: string[] = team.map(member => member.name);
+
+export const revenues: Revenue[] = [
+    { id: '1', revenue: 5000, month: 'July 2024', client: 'Glamour Inc.', comment: 'Monthly Retainer' },
+    { id: '2', revenue: 7500, month: 'July 2024', client: 'Peak Fitness', comment: 'Campaign Management Fee' },
+    { id: '3', revenue: 4500, month: 'June 2024', client: 'Glamour Inc.', comment: 'Monthly Retainer' },
+    { id: '4', revenue: 7000, month: 'June 2024', client: 'Peak Fitness', comment: 'Campaign Management Fee' },
+    { id: '5', revenue: 3000, month: 'June 2024', client: 'Artisan Bakes', comment: 'Initial Project Fee' },
+];
 
 export const financialData = {
     monthly: {

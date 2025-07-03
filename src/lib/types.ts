@@ -24,3 +24,20 @@ export type TimeEntry = {
     task: string;
     duration: string;
 };
+
+export type TeamMember = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: 'Manager' | 'Strategist' | 'Designer';
+    assignedClients: string[];
+};
+
+export type Revenue = {
+    id: string;
+    revenue: number;
+    month: string;
+    client: string;
+    comment: string;
+};
