@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import {
   Card,
   CardContent,
@@ -6,15 +9,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
-import { financialData, appointments } from "@/lib/data";
+import { financialData, appointments as allAppointments } from "@/lib/data";
+import { type Appointment } from "@/lib/types";
 import { CheckCircle2, Circle, DollarSign, ArrowDown, ArrowUp } from "lucide-react";
 import FinancialChart from "./financial-chart";
 
 export default function DashboardPage() {
-  const today = new Date();
-  const todaysAppointments = appointments.filter(
-    (appt) => new Date(appt.date).toDateString() === today.toDateString()
-  );
+  const [todaysAppointments, setTodaysAppointments] = React.useState<Appointment[]>([]);
+
+  React.useEffect(() => {
+    const today = new Date();
+    const filteredAppointments = allAppointments.filter(
+      (appt) => new Date(appt.date).toDateString() === today.toDateString()
+    );
+    setTodaysAppointments(filteredAppointments);
+  }, []);
 
   return (
     <AppShell>

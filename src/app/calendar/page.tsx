@@ -20,15 +20,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { type Appointment } from "@/lib/types";
 
 export default function CalendarPage() {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
-  const [selectedAppointments, setSelectedAppointments] = React.useState(
-    allAppointments.filter(
-      (appt) =>
-        new Date(appt.date).toDateString() === new Date().toDateString()
-    )
-  );
+  const [date, setDate] = React.useState<Date | undefined>();
+  const [selectedAppointments, setSelectedAppointments] = React.useState<Appointment[]>([]);
+
+  React.useEffect(() => {
+    // Set the initial date only on the client
+    setDate(new Date());
+  }, []);
 
   React.useEffect(() => {
     if (date) {

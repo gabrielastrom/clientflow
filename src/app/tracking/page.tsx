@@ -54,8 +54,14 @@ export default function TrackingPage() {
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
   const [selectedEntry, setSelectedEntry] = React.useState<TimeEntry | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [defaultDate, setDefaultDate] = React.useState("");
 
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    // Set the default date only on the client
+    setDefaultDate(new Date().toISOString().split("T")[0]);
+  }, []);
 
   const handleLogTimeSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -133,7 +139,7 @@ export default function TrackingPage() {
                   <Label htmlFor="date" className="text-right">
                     Date
                   </Label>
-                  <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="col-span-3" />
+                  <Input id="date" name="date" type="date" defaultValue={defaultDate} key={defaultDate} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="teamMember" className="text-right">
@@ -297,7 +303,7 @@ export default function TrackingPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit-duration" className="text-right">Duration</Label>
-                  <Input id="edit-duration" name="duration" defaultValue={selectedEntry.duration} className="col-span-3" required />
+                  <Input id="edit-duration" name="duration" defaultValue={selectedEntry.duration} className="col-san-3" required />
                 </div>
               </div>
               <DialogFooter>
