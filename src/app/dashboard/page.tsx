@@ -106,7 +106,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                This Month's Revenue
+                Month's Revenue
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -121,7 +121,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                This Month's Expenses
+                Month's Expenses
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                This Month's Profit
+                Month's Profit
               </CardTitle>
             </CardHeader>
             <CardContent>
