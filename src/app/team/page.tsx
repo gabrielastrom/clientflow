@@ -269,7 +269,7 @@ export default function TeamPage() {
                       <Badge variant="outline">{member.role}</Badge>
                     </TableCell>
                     <TableCell>
-                      {member.hourlyRate.toLocaleString()} kr
+                      {(member.hourlyRate || 0).toLocaleString()} kr
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
