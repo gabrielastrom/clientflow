@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getClients } from "@/services/clientService";
+import { format } from "date-fns";
 
 type SortableRevenueKeys = keyof Revenue;
 
@@ -72,6 +73,16 @@ export default function FinancePage() {
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableRevenueKeys; direction: 'ascending' | 'descending' } | null>(null);
 
   const { toast } = useToast();
+
+  const monthOptions = React.useMemo(() => {
+    const options: string[] = [];
+    const today = new Date();
+    for (let i = -6; i <= 6; i++) {
+        const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+        options.push(format(date, 'MMMM yyyy'));
+    }
+    return options;
+  }, []);
 
   React.useEffect(() => {
     async function fetchClientsData() {
@@ -100,8 +111,10 @@ export default function FinancePage() {
           aValue = a.revenue;
           bValue = b.revenue;
         } else if (sortConfig.key === 'month') {
-          aValue = new Date(a.month).getTime();
-          bValue = new Date(b.month).getTime();
+          // Note: new Date() parsing can be inconsistent. For production, a more robust parsing library might be needed.
+          // For "MMMM yyyy" format, this might not sort correctly across different years without more logic.
+          aValue = new Date(`1 ${a.month}`).getTime();
+          bValue = new Date(`1 ${b.month}`).getTime();
         }
   
         if (aValue < bValue) {
@@ -302,7 +315,16 @@ export default function FinancePage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="month" className="text-right">Month</Label>
-                <Input id="month" name="month" defaultValue={selectedRevenue?.month} className="col-span-3" placeholder="E.g. July 2024" required />
+                <Select name="month" defaultValue={selectedRevenue?.month || format(new Date(), "MMMM yyyy")}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((month) => (
+                        <SelectItem key={month} value={month}>{month}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="comment" className="text-right">Comment</Label>
