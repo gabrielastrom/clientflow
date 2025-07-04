@@ -50,12 +50,12 @@ import { getClients } from "@/services/clientService";
 
 export default function HomePage() {
   const { user } = useAuth();
-  const currentUser = user?.displayName || user?.email || "";
-
+  
   const [content, setContent] = React.useState<Content[]>([]);
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>([]);
   const [clients, setClients] = React.useState<Client[]>([]);
+  const [currentUserData, setCurrentUserData] = React.useState<TeamMember | null>(null);
 
   const [weeklyTasks, setWeeklyTasks] = React.useState<Content[]>([]);
   const [monthlyTasks, setMonthlyTasks] = React.useState<Content[]>([]);
@@ -100,7 +100,15 @@ export default function HomePage() {
   }, [toast]);
 
   React.useEffect(() => {
-    if (!currentUser || teamMembers.length === 0) return;
+    if (user && teamMembers.length > 0) {
+      const memberData = teamMembers.find(m => m.id === user.uid);
+      setCurrentUserData(memberData || null);
+    }
+  }, [user, teamMembers]);
+
+  React.useEffect(() => {
+    if (!currentUserData) return;
+
     // Set default date on client-side
     setDefaultDate(new Date().toISOString().split("T")[0]);
 
@@ -111,9 +119,7 @@ export default function HomePage() {
     const endOfThisMonth = endOfMonth(today);
 
     // Filter user tasks
-    const userContent = content.filter(item => {
-        return item.owner === user?.displayName || item.owner === user?.email;
-    });
+    const userContent = content.filter(item => item.owner === currentUserData.name);
     
     const weekTasks = userContent.filter(item => {
       const deadline = new Date(item.deadline);
@@ -154,20 +160,18 @@ export default function HomePage() {
     // Calculate monthly time entries and salary
     const userTimeEntriesThisMonth = timeEntries.filter(entry => {
         const entryDate = new Date(entry.date);
-        return (entry.teamMember === user?.displayName || entry.teamMember === user?.email) &&
+        return entry.teamMember === currentUserData.name &&
                isWithinInterval(entryDate, { start: startOfThisMonth, end: endOfThisMonth });
     });
 
     const totalHours = userTimeEntriesThisMonth.reduce((sum, entry) => sum + entry.duration, 0);
-    
-    const currentUserData = teamMembers.find(member => member.id === user?.uid);
-    const hourlyRate = currentUserData?.hourlyRate || 0;
+    const hourlyRate = currentUserData.hourlyRate || 0;
     const salary = totalHours * hourlyRate;
 
     setMonthlyHours(totalHours);
     setMonthlySalary(salary);
 
-  }, [timeEntries, content, currentUser, user, teamMembers]);
+  }, [timeEntries, content, currentUserData]);
 
   const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
     switch (status) {
@@ -186,6 +190,7 @@ export default function HomePage() {
 
   const handleLogTimeSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!currentUserData) return;
     const formData = new FormData(event.currentTarget);
     const newEntryData: Omit<TimeEntry, "id"> = {
       date: formData.get("date") as string,
@@ -215,6 +220,7 @@ export default function HomePage() {
 
   const handleAddTaskSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!currentUserData) return;
     const formData = new FormData(event.currentTarget);
     const newContentData: Omit<Content, "id"> = {
       title: formData.get("title") as string,
@@ -222,7 +228,7 @@ export default function HomePage() {
       status: "To Do",
       platform: formData.get("platform") as Content["platform"],
       deadline: formData.get("deadline") as string,
-      owner: currentUser,
+      owner: currentUserData.name,
       description: formData.get("description") as string || undefined,
     };
     try {
@@ -294,8 +300,8 @@ export default function HomePage() {
     return null;
   }
   
-  const name = currentUser.split('@')[0];
-  const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+  const welcomeName = currentUserData?.name || user.email?.split('@')[0] || '';
+  const capitalizedName = welcomeName.charAt(0).toUpperCase() + welcomeName.slice(1);
 
   return (
     <AppShell>
@@ -305,11 +311,11 @@ export default function HomePage() {
                     <h1 className="text-3xl font-bold tracking-tight">Welcome back, {capitalizedName}!</h1>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => setIsLogTimeOpen(true)}>
+                    <Button onClick={() => setIsLogTimeOpen(true)} disabled={!currentUserData}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Log Time
                     </Button>
-                    <Button onClick={() => setIsAddTaskOpen(true)}>
+                    <Button onClick={() => setIsAddTaskOpen(true)} disabled={!currentUserData}>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Task
                     </Button>
@@ -491,7 +497,7 @@ export default function HomePage() {
                   <Label htmlFor="teamMember" className="text-right">
                     Team Member
                   </Label>
-                   <Select name="teamMember" defaultValue={currentUser}>
+                   <Select name="teamMember" defaultValue={currentUserData?.name}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a member" />
                     </SelectTrigger>
