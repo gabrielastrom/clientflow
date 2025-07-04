@@ -55,8 +55,7 @@ export default function HomePage() {
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>([]);
   const [clients, setClients] = React.useState<Client[]>([]);
-  const [currentUserData, setCurrentUserData] = React.useState<TeamMember | null>(null);
-
+  
   const [weeklyTasks, setWeeklyTasks] = React.useState<Content[]>([]);
   const [monthlyTasks, setMonthlyTasks] = React.useState<Content[]>([]);
   const [monthlyProgress, setMonthlyProgress] = React.useState(0);
@@ -102,13 +101,14 @@ export default function HomePage() {
         unsubscribeTeam();
     }
   }, [toast]);
-
-  React.useEffect(() => {
+  
+  const currentUserData = React.useMemo(() => {
     if (user && teamMembers.length > 0) {
-      const memberData = teamMembers.find(m => m.id === user.uid);
-      setCurrentUserData(memberData || null);
+      return teamMembers.find(m => m.id === user.uid) || null;
     }
+    return null;
   }, [user, teamMembers]);
+
 
   React.useEffect(() => {
     if (!currentUserData) return;
