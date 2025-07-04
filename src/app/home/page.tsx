@@ -40,7 +40,7 @@ import { appointments as allAppointments } from "@/lib/data";
 import { type Content, type TimeEntry, type Appointment, type TeamMember, type Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, eachDayOfInterval, isSameDay } from 'date-fns';
-import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
+import { PlusCircle, Clock, DollarSign } from 'lucide-react';
 import { useAuth } from "@/contexts/auth-context";
 import { listenToTeamMembers } from "@/services/teamService";
 import { getContent, addContent, updateContent } from "@/services/contentService";
@@ -71,6 +71,7 @@ export default function HomePage() {
 
   const [selectedTask, setSelectedTask] = React.useState<Content | null>(null);
   const [isTaskStatusModalOpen, setIsTaskStatusModalOpen] = React.useState(false);
+  const [currentUserData, setCurrentUserData] = React.useState<TeamMember | null>(null);
 
   const { toast } = useToast();
 
@@ -102,11 +103,10 @@ export default function HomePage() {
     }
   }, [toast]);
   
-  const currentUserData = React.useMemo(() => {
+  React.useEffect(() => {
     if (user && teamMembers.length > 0) {
-      return teamMembers.find(m => m.id === user.uid) || null;
+      setCurrentUserData(teamMembers.find(m => m.id === user.uid) || null);
     }
-    return null;
   }, [user, teamMembers]);
 
 
@@ -452,17 +452,17 @@ export default function HomePage() {
                         <CardContent className="grid grid-cols-3 gap-4">
                             <Button variant="outline" asChild>
                                 <Link href="#">
-                                    <Mail className="mr-2 h-4 w-4"/> Email
+                                    Email
                                 </Link>
                             </Button>
                             <Button variant="outline" asChild>
                                 <Link href="#">
-                                    <MessageSquare className="mr-2 h-4 w-4"/> Discord
+                                    Discord
                                 </Link>
                             </Button>
                             <Button variant="outline" asChild>
                                 <Link href="#">
-                                    <HardDrive className="mr-2 h-4 w-4"/> Drive
+                                    Drive
                                 </Link>
                             </Button>
                         </CardContent>
