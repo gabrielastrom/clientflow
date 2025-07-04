@@ -9,8 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
-import { financialData, appointments as allAppointments, timeEntries, content, clients } from "@/lib/data";
-import { type Appointment, type TeamMember } from "@/lib/types";
+import { financialData, appointments as allAppointments, content, clients } from "@/lib/data";
+import { type Appointment, type TeamMember, type TimeEntry } from "@/lib/types";
 import { Clock, DollarSign, Pencil } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import RevenueByClientChart from "./revenue-by-client-chart";
 import { getTeamMembers, updateTeamMember } from "@/services/teamService";
+import { getTimeEntries } from "@/services/timeTrackingService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
@@ -77,14 +78,18 @@ export default function DashboardPage() {
     setTotalContentCount(totalMonthlyVideos);
     
     // Fetch team data and calculate performance
-    async function fetchTeamData() {
+    async function fetchData() {
         setIsLoadingTeam(true);
         try {
-            const teamData = await getTeamMembers();
+            const [teamData, timeEntriesData] = await Promise.all([
+              getTeamMembers(),
+              getTimeEntries()
+            ]);
+
             setTeam(teamData);
 
             const performanceData = teamData.map(member => {
-                const hoursThisMonth = timeEntries
+                const hoursThisMonth = timeEntriesData
                     .filter(entry => {
                         const entryDate = new Date(entry.date);
                         return entry.teamMember === member.name &&
@@ -102,14 +107,19 @@ export default function DashboardPage() {
             });
             setTeamPerformance(performanceData);
         } catch (error) {
-            console.error("Failed to fetch team data", error);
+            console.error("Failed to fetch dashboard data", error);
+            toast({
+                title: "Error",
+                description: "Could not load dashboard data.",
+                variant: "destructive"
+            });
         } finally {
             setIsLoadingTeam(false);
         }
     }
 
-    fetchTeamData();
-  }, []);
+    fetchData();
+  }, [toast]);
 
   const handleRateEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

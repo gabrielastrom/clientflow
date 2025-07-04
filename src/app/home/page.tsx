@@ -36,14 +36,15 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { clients as allClients, timeEntries as initialTimeEntries, appointments as allAppointments } from "@/lib/data";
+import { clients as allClients, appointments as allAppointments } from "@/lib/data";
 import { type Content, type TimeEntry, type Appointment, type TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
 import { useAuth } from "@/contexts/auth-context";
 import { getTeamMembers } from "@/services/teamService";
-import { getContent } from "@/services/contentService";
+import { getContent, addContent, updateContent } from "@/services/contentService";
+import { getTimeEntries, addTimeEntry } from "@/services/timeTrackingService";
 
 
 export default function HomePage() {
@@ -52,6 +53,8 @@ export default function HomePage() {
 
   const [content, setContent] = React.useState<Content[]>([]);
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
+  const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>([]);
+
   const [weeklyTasks, setWeeklyTasks] = React.useState<Content[]>([]);
   const [monthlyTasks, setMonthlyTasks] = React.useState<Content[]>([]);
   const [monthlyProgress, setMonthlyProgress] = React.useState(0);
@@ -59,7 +62,6 @@ export default function HomePage() {
   const [totalCount, setTotalCount] = React.useState(0);
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
   const [isAddTaskOpen, setIsAddTaskOpen] = React.useState(false);
-  const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>(initialTimeEntries);
   const [defaultDate, setDefaultDate] = React.useState("");
   const [monthlyHours, setMonthlyHours] = React.useState(0);
   const [monthlySalary, setMonthlySalary] = React.useState(0);
@@ -74,12 +76,14 @@ export default function HomePage() {
    React.useEffect(() => {
     async function fetchData() {
         try {
-            const [contentData, teamData] = await Promise.all([
+            const [contentData, teamData, timeEntriesData] = await Promise.all([
                 getContent(),
                 getTeamMembers(),
+                getTimeEntries(),
             ]);
             setContent(contentData);
             setTeamMembers(teamData);
+            setTimeEntries(timeEntriesData);
         } catch (error) {
             toast({
                 title: "Error fetching data",
@@ -176,11 +180,10 @@ export default function HomePage() {
     }
   };
 
-  const handleLogTimeSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogTimeSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newEntry: TimeEntry = {
-      id: (timeEntries.length + 1).toString(),
+    const newEntryData: Omit<TimeEntry, "id"> = {
       date: formData.get("date") as string,
       teamMember: formData.get("teamMember") as string,
       client: formData.get("client") as string,
@@ -188,20 +191,28 @@ export default function HomePage() {
       duration: parseFloat(formData.get("duration") as string),
     };
 
-    setTimeEntries([newEntry, ...timeEntries]);
-    setIsLogTimeOpen(false);
-    (event.target as HTMLFormElement).reset();
-    toast({
-      title: "Time Logged",
-      description: "Your time entry has been successfully saved.",
-    });
+    try {
+      const newEntry = await addTimeEntry(newEntryData);
+      setTimeEntries([newEntry, ...timeEntries]);
+      setIsLogTimeOpen(false);
+      (event.target as HTMLFormElement).reset();
+      toast({
+        title: "Time Logged",
+        description: "Your time entry has been successfully saved.",
+      });
+    } catch (error) {
+       toast({
+        title: "Error",
+        description: "Could not save time entry.",
+        variant: "destructive"
+       });
+    }
   };
 
-  const handleAddTaskSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddTaskSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newContent: Content = {
-      id: `${Date.now()}`,
+    const newContentData: Omit<Content, "id"> = {
       title: formData.get("title") as string,
       client: formData.get("client") as string,
       status: "To Do",
@@ -210,9 +221,14 @@ export default function HomePage() {
       owner: currentUser,
       description: formData.get("description") as string || undefined,
     };
-    setContent((prev) => [newContent, ...prev]);
-    setIsAddTaskOpen(false);
-    toast({ title: "Success", description: "Task added successfully." });
+    try {
+        const newContent = await addContent(newContentData);
+        setContent((prev) => [newContent, ...prev]);
+        setIsAddTaskOpen(false);
+        toast({ title: "Success", description: "Task added successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not add task.", variant: "destructive" });
+    }
   };
   
   const handleTaskClick = (task: Content) => {
@@ -220,24 +236,29 @@ export default function HomePage() {
     setIsTaskStatusModalOpen(true);
   };
 
-  const handleStatusUpdateSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleStatusUpdateSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedTask) return;
 
     const formData = new FormData(event.currentTarget);
     const newStatus = formData.get("status") as Content["status"];
 
-    const updatedContent = content.map(item => 
-      item.id === selectedTask.id ? { ...item, status: newStatus } : item
-    );
-    setContent(updatedContent);
+    const updatedTask = { ...selectedTask, status: newStatus };
 
-    setIsTaskStatusModalOpen(false);
-    setSelectedTask(null);
-    toast({
-      title: "Status Updated",
-      description: `Task "${selectedTask.title}" has been updated to "${newStatus}".`,
-    });
+    try {
+        await updateContent(updatedTask);
+        setContent(content.map(item => 
+          item.id === selectedTask.id ? updatedTask : item
+        ));
+        setIsTaskStatusModalOpen(false);
+        setSelectedTask(null);
+        toast({
+          title: "Status Updated",
+          description: `Task "${selectedTask.title}" has been updated to "${newStatus}".`,
+        });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update task status.", variant: "destructive" });
+    }
   };
 
   const TaskList = ({ tasks, onTaskClick }: { tasks: Content[], onTaskClick: (task: Content) => void }) => {
@@ -620,3 +641,5 @@ export default function HomePage() {
     </AppShell>
   );
 }
+
+    

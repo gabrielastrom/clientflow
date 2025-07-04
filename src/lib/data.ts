@@ -1,4 +1,4 @@
-import type { Client, Appointment, TimeEntry, TeamMember, Revenue, Content } from './types';
+import type { Client, Appointment, TeamMember, Revenue, Content } from './types';
 
 export const clients: Client[] = [
   { id: '1', name: 'Glamour Inc.', contactPerson: 'Jessica Day', email: 'jessica.day@glamour.com', phone: '555-0101', status: 'Active', joinDate: '2023-01-15', monthlyVideos: 5 },
@@ -21,13 +21,6 @@ export const appointments: Appointment[] = [
     { id: '2', title: 'Design new posts for Peak Fitness', date: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0), type: 'Task', clientId: '2', assignedPersons: ['Taylor Morgan'], comments: 'Focus on video content.' },
     { id: '3', title: 'Peak Fitness campaign launch', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2), type: 'Deadline', clientId: '2', assignedPersons: ['Casey Jordan', 'Alex Ray'], location: 'Remote' },
     { id: '4', title: 'Follow up with Innovate Tech', date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 11, 0), type: 'Meeting', clientId: '4', location: 'Client Office', assignedPersons: ['Alex Doe'], comments: 'Discuss contract details.' },
-];
-
-export const timeEntries: TimeEntry[] = [
-    { id: '1', date: '2024-07-21', teamMember: 'Alex Ray', client: 'Glamour Inc.', task: 'Content Creation', duration: 4 },
-    { id: '2', date: '2024-07-21', teamMember: 'Casey Jordan', client: 'Peak Fitness', task: 'Ad Campaign Management', duration: 6.5 },
-    { id: '3', date: '2024-07-20', teamMember: 'Alex Ray', client: 'The Coffee House', task: 'Analytics Report', duration: 2.25 },
-    { id: '4', date: '2024-07-20', teamMember: 'Taylor Morgan', client: 'Glamour Inc.', task: 'Client Meeting', duration: 1 },
 ];
 
 export const teamMembers: string[] = team.map(member => member.name);
@@ -84,3 +77,5 @@ export const financialData = {
         { month: 'Jul', profit: 8300 },
     ],
 };
+
+    

@@ -18,14 +18,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { timeEntries as initialTimeEntries, clients as staticClients } from "@/lib/data";
-import type { TimeEntry, TeamMember } from "@/lib/types";
+import { clients as staticClients } from "@/lib/data";
+import type { TimeEntry, TeamMember, Client } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -38,6 +39,16 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -49,6 +60,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getTeamMembers } from "@/services/teamService";
+import { getTimeEntries, addTimeEntry, updateTimeEntry, deleteTimeEntry } from "@/services/timeTrackingService";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getClients } from "@/services/clientService";
 
 type SortableTimeEntryKeys = keyof TimeEntry;
 
@@ -58,11 +72,16 @@ type MonthlySummary = {
 };
 
 export default function TrackingPage() {
-  const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>(initialTimeEntries);
+  const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>([]);
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
+  const [clients, setClients] = React.useState<Client[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
   const [selectedEntry, setSelectedEntry] = React.useState<TimeEntry | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+
   const [defaultDate, setDefaultDate] = React.useState("");
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableTimeEntryKeys; direction: 'ascending' | 'descending' } | null>(null);
   const [selectedMonth, setSelectedMonth] = React.useState<string>("");
@@ -72,32 +91,39 @@ export default function TrackingPage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    // Set the default date and month only on the client
+    // Set the default date only on the client
     const now = new Date();
     setDefaultDate(now.toISOString().split("T")[0]);
+    setSelectedMonth(now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2));
 
-    if (initialTimeEntries.length > 0) {
-      // Sort to find the latest date. Assumes YYYY-MM-DD format is sortable as string.
-      const latestDate = [...initialTimeEntries].sort((a, b) => b.date.localeCompare(a.date))[0].date;
-      setSelectedMonth(latestDate.substring(0, 7)); // YYYY-MM
-    } else {
-      // If no entries, default to current month
-      setSelectedMonth(now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2));
-    }
-
-    async function fetchTeam() {
+    async function fetchData() {
+      setIsLoading(true);
       try {
-        const teamData = await getTeamMembers();
+        const [teamData, entriesData, clientData] = await Promise.all([
+          getTeamMembers(),
+          getTimeEntries(),
+          getClients(),
+        ]);
         setTeamMembers(teamData);
+        setTimeEntries(entriesData);
+        setClients(clientData);
+
+        if (entriesData.length > 0) {
+            const latestDate = entriesData[0].date;
+            setSelectedMonth(latestDate.substring(0, 7));
+        }
+
       } catch (error) {
         toast({
-          title: "Error fetching team",
-          description: "Could not load team from the database.",
+          title: "Error fetching data",
+          description: "Could not load data from the database.",
           variant: "destructive"
         });
+      } finally {
+        setIsLoading(false);
       }
     }
-    fetchTeam();
+    fetchData();
 
   }, [toast]);
 
@@ -158,11 +184,10 @@ export default function TrackingPage() {
     return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
   };
 
-  const handleLogTimeSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogTimeSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newEntry: TimeEntry = {
-      id: (timeEntries.length + 1).toString(),
+    const newEntryData: Omit<TimeEntry, 'id'> = {
       date: formData.get("date") as string,
       teamMember: formData.get("teamMember") as string,
       client: formData.get("client") as string,
@@ -170,16 +195,21 @@ export default function TrackingPage() {
       duration: parseFloat(formData.get("duration") as string),
     };
 
-    setTimeEntries([newEntry, ...timeEntries]);
-    setIsLogTimeOpen(false);
-    (event.target as HTMLFormElement).reset();
-    toast({
-      title: "Time Logged",
-      description: "Your time entry has been successfully saved.",
-    });
+    try {
+        const newEntry = await addTimeEntry(newEntryData);
+        setTimeEntries([newEntry, ...timeEntries]);
+        setIsLogTimeOpen(false);
+        (event.target as HTMLFormElement).reset();
+        toast({
+          title: "Time Logged",
+          description: "Your time entry has been successfully saved.",
+        });
+    } catch(error) {
+        toast({ title: "Error", description: "Could not save time entry.", variant: "destructive" });
+    }
   };
 
-  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedEntry) return;
 
@@ -193,14 +223,34 @@ export default function TrackingPage() {
       duration: parseFloat(formData.get("duration") as string),
     };
 
-    setTimeEntries(
-      timeEntries.map((entry) => (entry.id === updatedEntry.id ? updatedEntry : entry))
-    );
-    setIsEditOpen(false);
-    toast({
-      title: "Entry Updated",
-      description: "The time entry has been successfully updated.",
-    });
+    try {
+        await updateTimeEntry(updatedEntry);
+        setTimeEntries(
+          timeEntries.map((entry) => (entry.id === updatedEntry.id ? updatedEntry : entry))
+        );
+        setIsEditOpen(false);
+        toast({
+          title: "Entry Updated",
+          description: "The time entry has been successfully updated.",
+        });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update time entry.", variant: "destructive" });
+    }
+  };
+  
+  const handleDeleteEntry = async () => {
+    if (!selectedEntry) return;
+    try {
+        await deleteTimeEntry(selectedEntry.id);
+        setTimeEntries(timeEntries.filter((e) => e.id !== selectedEntry.id));
+        setIsDeleteAlertOpen(false);
+        toast({
+            title: "Entry Deleted",
+            description: "The time entry has been removed.",
+        });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not delete time entry.", variant: "destructive" });
+    }
   };
 
 
@@ -217,7 +267,7 @@ export default function TrackingPage() {
           </div>
           <Dialog open={isLogTimeOpen} onOpenChange={setIsLogTimeOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button disabled={isLoading}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Log Time
               </Button>
@@ -256,12 +306,12 @@ export default function TrackingPage() {
                     <Label htmlFor="client" className="text-right">
                       Client
                     </Label>
-                    <Select name="client" defaultValue={staticClients[0].name}>
+                    <Select name="client">
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
-                        {staticClients.map((client) => (
+                        {clients.map((client) => (
                           <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -341,36 +391,65 @@ export default function TrackingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sortedTimeEntries.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell>{entry.date}</TableCell>
-                    <TableCell className="font-medium">{entry.teamMember}</TableCell>
-                    <TableCell>{entry.client}</TableCell>
-                    <TableCell>{entry.task}</TableCell>
-                    <TableCell className="text-right">{entry.duration.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              setSelectedEntry(entry);
-                              setIsEditOpen(true);
-                            }}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : sortedTimeEntries.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                            No time entries found.
+                        </TableCell>
+                    </TableRow>
+                ) : (
+                  sortedTimeEntries.map((entry) => (
+                    <TableRow key={entry.id}>
+                      <TableCell>{entry.date}</TableCell>
+                      <TableCell className="font-medium">{entry.teamMember}</TableCell>
+                      <TableCell>{entry.client}</TableCell>
+                      <TableCell>{entry.task}</TableCell>
+                      <TableCell className="text-right">{entry.duration.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onSelect={() => {
+                                setSelectedEntry(entry);
+                                setIsEditOpen(true);
+                              }}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onSelect={() => {
+                                setSelectedEntry(entry);
+                                setIsDeleteAlertOpen(true);
+                              }}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
@@ -412,7 +491,7 @@ export default function TrackingPage() {
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
-                        {staticClients.map((client) => (
+                        {clients.map((client) => (
                           <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -438,6 +517,27 @@ export default function TrackingPage() {
           </DialogContent>
         </Dialog>
         
+        {/* Delete Entry Alert */}
+        <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+            <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete this time entry.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={handleDeleteEntry}
+                >
+                Continue
+                </AlertDialogAction>
+            </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
         {/* Monthly Summary Card */}
         <Card>
           <CardHeader>
@@ -455,6 +555,7 @@ export default function TrackingPage() {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="w-48"
+                disabled={isLoading}
               />
             </div>
             {monthlySummary.length > 0 ? (
@@ -477,3 +578,5 @@ export default function TrackingPage() {
     </AppShell>
   );
 }
+
+    
