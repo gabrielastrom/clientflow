@@ -59,7 +59,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { getTeamMembers, updateTeamMember, deleteTeamMember } from "@/services/teamService";
+import { listenToTeamMembers, updateTeamMember, deleteTeamMember } from "@/services/teamService";
 import { getClients } from "@/services/clientService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -79,26 +79,27 @@ export default function TeamPage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    async function fetchData() {
-        setIsLoading(true);
+    async function fetchClients() {
         try {
-            const [teamData, clientData] = await Promise.all([
-                getTeamMembers(),
-                getClients()
-            ]);
-            setTeam(teamData);
+            const clientData = await getClients();
             setClients(clientData);
         } catch (error) {
-            toast({
-                title: "Error fetching data",
-                description: "Could not load data from the database.",
+             toast({
+                title: "Error fetching clients",
+                description: "Could not load client data.",
                 variant: "destructive"
             });
-        } finally {
-            setIsLoading(false);
         }
     }
-    fetchData();
+    
+    fetchClients();
+    
+    const unsubscribeTeam = listenToTeamMembers((teamData) => {
+        setTeam(teamData);
+        setIsLoading(false);
+    });
+
+    return () => unsubscribeTeam();
   }, [toast]);
 
 

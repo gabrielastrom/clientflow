@@ -1,22 +1,25 @@
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import type { TeamMember } from '@/lib/types';
 import type { User } from 'firebase/auth';
 
-export async function getTeamMembers(): Promise<TeamMember[]> {
+export function listenToTeamMembers(callback: (team: TeamMember[]) => void): () => void {
     try {
         const teamCol = collection(db, 'team');
-        const teamSnapshot = await getDocs(teamCol);
-        if (teamSnapshot.empty) {
-            console.log('No team members found in Firestore.');
-            return [];
-        }
-        const teamList = teamSnapshot.docs.map(doc => doc.data() as TeamMember);
-        return teamList;
+        const unsubscribe = onSnapshot(teamCol, (teamSnapshot) => {
+            if (teamSnapshot.empty) {
+                console.log('No team members found in Firestore.');
+                callback([]);
+                return;
+            }
+            const teamList = teamSnapshot.docs.map(doc => doc.data() as TeamMember);
+            callback(teamList);
+        });
+        return unsubscribe;
     } catch (error) {
-        console.error("Error fetching team members: ", error);
-        throw new Error("Could not fetch team members.");
+        console.error("Error setting up team members listener: ", error);
+        throw new Error("Could not listen to team members.");
     }
 }
 

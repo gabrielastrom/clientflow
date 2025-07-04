@@ -19,7 +19,7 @@ import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from 'da
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import RevenueByClientChart from "./revenue-by-client-chart";
-import { getTeamMembers, updateTeamMember } from "@/services/teamService";
+import { listenToTeamMembers, updateTeamMember } from "@/services/teamService";
 import { getTimeEntries } from "@/services/timeTrackingService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const [doneContentCount, setDoneContentCount] = React.useState(0);
   const [totalContentCount, setTotalContentCount] = React.useState(0);
   const [team, setTeam] = React.useState<TeamMember[]>([]);
+  const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>([]);
   const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
   const [isLoadingTeam, setIsLoadingTeam] = React.useState(true);
   const [selectedMemberForRateEdit, setSelectedMemberForRateEdit] = React.useState<TeamMember | null>(null);
@@ -76,50 +77,53 @@ export default function DashboardPage() {
     const totalMonthlyVideos = clients.reduce((sum, client) => sum + client.monthlyVideos, 0);
     setDoneContentCount(doneContentThisMonth);
     setTotalContentCount(totalMonthlyVideos);
-    
-    // Fetch team data and calculate performance
-    async function fetchData() {
-        setIsLoadingTeam(true);
-        try {
-            const [teamData, timeEntriesData] = await Promise.all([
-              getTeamMembers(),
-              getTimeEntries()
-            ]);
 
-            setTeam(teamData);
+    // Fetch time entries
+     getTimeEntries().then(setTimeEntries).catch(error => {
+      console.error("Failed to fetch time entries for dashboard", error);
+      toast({
+          title: "Error",
+          description: "Could not load time entry data.",
+          variant: "destructive"
+      });
+    });
 
-            const performanceData = teamData.map(member => {
-                const hoursThisMonth = timeEntriesData
-                    .filter(entry => {
-                        const entryDate = new Date(entry.date);
-                        return entry.teamMember.toLowerCase() === member.name.toLowerCase() &&
-                               entryDate.getFullYear() === currentYear &&
-                               entryDate.getMonth() === currentMonth;
-                    })
-                    .reduce((total, entry) => total + entry.duration, 0);
-                
-                return {
-                    id: member.id,
-                    name: member.name,
-                    role: member.role,
-                    hoursThisMonth: hoursThisMonth,
-                };
-            });
-            setTeamPerformance(performanceData);
-        } catch (error) {
-            console.error("Failed to fetch dashboard data", error);
-            toast({
-                title: "Error",
-                description: "Could not load dashboard data.",
-                variant: "destructive"
-            });
-        } finally {
-            setIsLoadingTeam(false);
-        }
-    }
+    // Set up real-time listener for team members
+    const unsubscribeTeam = listenToTeamMembers((teamData) => {
+        setTeam(teamData);
+        if (teamData) setIsLoadingTeam(false);
+    });
 
-    fetchData();
+    return () => {
+        unsubscribeTeam();
+    };
   }, [toast]);
+
+  React.useEffect(() => {
+    if (team.length === 0) return;
+
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+
+    const performanceData = team.map(member => {
+        const hoursThisMonth = timeEntries
+            .filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entry.teamMember.toLowerCase() === member.name.toLowerCase() &&
+                       entryDate.getFullYear() === currentYear &&
+                       entryDate.getMonth() === currentMonth;
+            })
+            .reduce((total, entry) => total + entry.duration, 0);
+        
+        return {
+            id: member.id,
+            name: member.name,
+            role: member.role,
+            hoursThisMonth: hoursThisMonth,
+        };
+    });
+    setTeamPerformance(performanceData);
+  }, [team, timeEntries]);
 
   const handleRateEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -140,7 +144,7 @@ export default function DashboardPage() {
 
     try {
         await updateTeamMember(updatedMember);
-        setTeam(team.map(m => m.id === updatedMember.id ? updatedMember : m));
+        // State will be updated by the real-time listener
         setIsRateEditDialogOpen(false);
         toast({ title: "Success", description: "Hourly rate updated successfully." });
     } catch (error) {

@@ -58,7 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { getTeamMembers } from "@/services/teamService";
+import { listenToTeamMembers } from "@/services/teamService";
 import { getTimeEntries, addTimeEntry, updateTimeEntry, deleteTimeEntry } from "@/services/timeTrackingService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getClients } from "@/services/clientService";
@@ -98,12 +98,10 @@ export default function TrackingPage() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [teamData, entriesData, clientData] = await Promise.all([
-          getTeamMembers(),
+        const [entriesData, clientData] = await Promise.all([
           getTimeEntries(),
           getClients(),
         ]);
-        setTeamMembers(teamData);
         setTimeEntries(entriesData);
         setClients(clientData);
 
@@ -123,6 +121,9 @@ export default function TrackingPage() {
       }
     }
     fetchData();
+
+    const unsubscribeTeam = listenToTeamMembers(setTeamMembers);
+    return () => unsubscribeTeam();
 
   }, [toast]);
 

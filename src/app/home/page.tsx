@@ -42,7 +42,7 @@ import { cn } from "@/lib/utils";
 import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
 import { useAuth } from "@/contexts/auth-context";
-import { getTeamMembers } from "@/services/teamService";
+import { listenToTeamMembers } from "@/services/teamService";
 import { getContent, addContent, updateContent } from "@/services/contentService";
 import { getTimeEntries, addTimeEntry } from "@/services/timeTrackingService";
 import { getClients } from "@/services/clientService";
@@ -78,14 +78,12 @@ export default function HomePage() {
    React.useEffect(() => {
     async function fetchData() {
         try {
-            const [contentData, teamData, timeEntriesData, clientData] = await Promise.all([
+            const [contentData, timeEntriesData, clientData] = await Promise.all([
                 getContent(),
-                getTeamMembers(),
                 getTimeEntries(),
                 getClients(),
             ]);
             setContent(contentData);
-            setTeamMembers(teamData);
             setTimeEntries(timeEntriesData);
             setClients(clientData);
         } catch (error) {
@@ -97,6 +95,12 @@ export default function HomePage() {
         }
     }
     fetchData();
+
+    const unsubscribeTeam = listenToTeamMembers(setTeamMembers);
+
+    return () => {
+        unsubscribeTeam();
+    }
   }, [toast]);
 
   React.useEffect(() => {

@@ -61,7 +61,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import { getTeamMembers } from "@/services/teamService";
+import { listenToTeamMembers } from "@/services/teamService";
 import { getContent, addContent, updateContent, deleteContent } from "@/services/contentService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getClients } from "@/services/clientService";
@@ -86,13 +86,11 @@ export default function ContentPage() {
     async function fetchData() {
         setIsLoading(true);
         try {
-            const [contentData, teamData, clientData] = await Promise.all([
+            const [contentData, clientData] = await Promise.all([
                 getContent(),
-                getTeamMembers(),
                 getClients(),
             ]);
             setContentList(contentData);
-            setTeamMembers(teamData);
             setClients(clientData);
         } catch (error) {
             toast({
@@ -105,6 +103,9 @@ export default function ContentPage() {
         }
     }
     fetchData();
+    
+    const unsubscribeTeam = listenToTeamMembers(setTeamMembers);
+    return () => unsubscribeTeam();
   }, [toast]);
 
 
