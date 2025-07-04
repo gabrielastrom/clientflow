@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarProvider,
   Sidebar,
@@ -27,6 +27,7 @@ import {
   Home,
   Moon,
   Sun,
+  LogOut,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -41,6 +42,9 @@ import {
 import { Button } from "./ui/button";
 import { Footer } from "./footer";
 import { useTheme } from "next-themes";
+import { useAuth } from "@/contexts/auth-context";
+import { signOut } from "@/services/authService";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { href: "/home", icon: Home, label: "Home" },
@@ -53,7 +57,14 @@ const navItems = [
   { href: "/tracking", icon: Clock, label: "Time Tracking" },
 ];
 
+const publicRoutes = ["/login", "/signup"];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  if (publicRoutes.includes(pathname)) {
+    return <>{children}</>;
+  }
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen">
@@ -188,6 +199,28 @@ function ThemeToggle() {
 }
 
 function UserMenu({ isMobile = false }) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      toast({
+        title: "Sign-out Failed",
+        description: "There was an issue signing you out.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getInitials = (email: string | null | undefined) => {
+    if (!email) return 'U';
+    return email.substring(0, 2).toUpperCase();
+  }
+
   const dropdownMenu = (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -195,27 +228,27 @@ function UserMenu({ isMobile = false }) {
           <Button variant="ghost" size="icon" className="rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src="https://placehold.co/100x100.png"
+                src={user?.photoURL || "https://placehold.co/100x100.png"}
                 data-ai-hint="person user"
                 alt="User Avatar"
               />
-              <AvatarFallback>AD</AvatarFallback>
+              <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
             </Avatar>
           </Button>
         ) : (
           <SidebarMenuButton className="h-auto group-data-[collapsible=icon]:p-2">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src="https://placehold.co/100x100.png"
+                src={user?.photoURL || "https://placehold.co/100x100.png"}
                 data-ai-hint="person user"
                 alt="User Avatar"
               />
-              <AvatarFallback>AD</AvatarFallback>
+              <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
             </Avatar>
             <div className="group-data-[collapsible=icon]:hidden">
-              <p className="font-medium text-sm">Alex Doe</p>
-              <p className="text-xs text-muted-foreground">
-                alex@clientflow.com
+              <p className="font-medium text-sm truncate">{user?.displayName || user?.email || "User"}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.email}
               </p>
             </div>
           </SidebarMenuButton>
@@ -228,10 +261,14 @@ function UserMenu({ isMobile = false }) {
       >
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Profile</DropdownMenuItem>
-        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings">Settings</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Log out</DropdownMenuItem>
+        <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2">
+          <LogOut className="h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

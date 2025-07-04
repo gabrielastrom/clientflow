@@ -41,11 +41,12 @@ import { type Content, type TimeEntry, type Appointment } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
-
-// Hardcoded current user for demonstration purposes
-const CURRENT_USER = "Alex Ray";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const currentUser = user?.displayName || user?.email || "";
+
   const [content, setContent] = React.useState<Content[]>(allContent);
   const [weeklyTasks, setWeeklyTasks] = React.useState<Content[]>([]);
   const [monthlyTasks, setMonthlyTasks] = React.useState<Content[]>([]);
@@ -67,6 +68,7 @@ export default function HomePage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
+    if (!currentUser) return;
     // Set default date on client-side
     setDefaultDate(new Date().toISOString().split("T")[0]);
 
@@ -77,7 +79,12 @@ export default function HomePage() {
     const endOfThisMonth = endOfMonth(today);
 
     // Filter user tasks
-    const userContent = content.filter(item => item.owner === CURRENT_USER);
+    const userContent = content.filter(item => {
+        // A simple check to see if the owner is the current user.
+        // For email-based users, we can check if the email matches. For display names, it might be less reliable.
+        // This logic can be improved based on how user identity is stored.
+        return item.owner === user?.displayName || item.owner === user?.email;
+    });
     
     const weekTasks = userContent.filter(item => {
       const deadline = new Date(item.deadline);
@@ -118,7 +125,7 @@ export default function HomePage() {
     // Calculate monthly time entries and salary
     const userTimeEntriesThisMonth = timeEntries.filter(entry => {
         const entryDate = new Date(entry.date);
-        return entry.teamMember === CURRENT_USER &&
+        return (entry.teamMember === user?.displayName || entry.teamMember === user?.email) &&
                isWithinInterval(entryDate, { start: startOfThisMonth, end: endOfThisMonth });
     });
 
@@ -129,7 +136,7 @@ export default function HomePage() {
     setMonthlyHours(totalHours);
     setMonthlySalary(salary);
 
-  }, [timeEntries, content]);
+  }, [timeEntries, content, currentUser, user]);
 
   const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
     switch (status) {
@@ -177,7 +184,7 @@ export default function HomePage() {
       status: "To Do",
       platform: formData.get("platform") as Content["platform"],
       deadline: formData.get("deadline") as string,
-      owner: CURRENT_USER,
+      owner: currentUser,
       description: formData.get("description") as string || undefined,
     };
     setContent((prev) => [newContent, ...prev]);
@@ -235,12 +242,16 @@ export default function HomePage() {
     );
   };
   
+  if (!user) {
+    return null;
+  }
+  
   return (
     <AppShell>
         <div className="flex flex-col gap-8">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Welcome back, {CURRENT_USER.split(' ')[0]}!</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Welcome back, {currentUser.split('@')[0]}!</h1>
                 </div>
                 <div className="flex gap-2">
                     <Button onClick={() => setIsLogTimeOpen(true)}>
@@ -429,7 +440,7 @@ export default function HomePage() {
                   <Label htmlFor="teamMember" className="text-right">
                     Team Member
                   </Label>
-                   <Select name="teamMember" defaultValue={CURRENT_USER}>
+                   <Select name="teamMember" defaultValue={currentUser}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a member" />
                     </SelectTrigger>
@@ -583,6 +594,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-    
-
-    
