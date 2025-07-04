@@ -119,7 +119,7 @@ export default function HomePage() {
     const endOfThisMonth = endOfMonth(today);
 
     // Filter user tasks
-    const userContent = content.filter(item => item.owner === currentUserData.name);
+    const userContent = content.filter(item => item.owner.toLowerCase() === currentUserData.name.toLowerCase());
     
     const weekTasks = userContent.filter(item => {
       const deadline = new Date(item.deadline);
@@ -160,7 +160,7 @@ export default function HomePage() {
     // Calculate monthly time entries and salary
     const userTimeEntriesThisMonth = timeEntries.filter(entry => {
         const entryDate = new Date(entry.date);
-        return entry.teamMember === currentUserData.name &&
+        return entry.teamMember.toLowerCase() === currentUserData.name.toLowerCase() &&
                isWithinInterval(entryDate, { start: startOfThisMonth, end: endOfThisMonth });
     });
 

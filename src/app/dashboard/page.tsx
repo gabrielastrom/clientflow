@@ -92,7 +92,7 @@ export default function DashboardPage() {
                 const hoursThisMonth = timeEntriesData
                     .filter(entry => {
                         const entryDate = new Date(entry.date);
-                        return entry.teamMember === member.name &&
+                        return entry.teamMember.toLowerCase() === member.name.toLowerCase() &&
                                entryDate.getFullYear() === currentYear &&
                                entryDate.getMonth() === currentMonth;
                     })
