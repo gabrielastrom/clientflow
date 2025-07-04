@@ -36,8 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { clients as allClients, appointments as allAppointments } from "@/lib/data";
-import { type Content, type TimeEntry, type Appointment, type TeamMember } from "@/lib/types";
+import { appointments as allAppointments } from "@/lib/data";
+import { type Content, type TimeEntry, type Appointment, type TeamMember, type Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
@@ -45,6 +45,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { getTeamMembers } from "@/services/teamService";
 import { getContent, addContent, updateContent } from "@/services/contentService";
 import { getTimeEntries, addTimeEntry } from "@/services/timeTrackingService";
+import { getClients } from "@/services/clientService";
 
 
 export default function HomePage() {
@@ -54,6 +55,7 @@ export default function HomePage() {
   const [content, setContent] = React.useState<Content[]>([]);
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>([]);
+  const [clients, setClients] = React.useState<Client[]>([]);
 
   const [weeklyTasks, setWeeklyTasks] = React.useState<Content[]>([]);
   const [monthlyTasks, setMonthlyTasks] = React.useState<Content[]>([]);
@@ -76,14 +78,16 @@ export default function HomePage() {
    React.useEffect(() => {
     async function fetchData() {
         try {
-            const [contentData, teamData, timeEntriesData] = await Promise.all([
+            const [contentData, teamData, timeEntriesData, clientData] = await Promise.all([
                 getContent(),
                 getTeamMembers(),
                 getTimeEntries(),
+                getClients(),
             ]);
             setContent(contentData);
             setTeamMembers(teamData);
             setTimeEntries(timeEntriesData);
+            setClients(clientData);
         } catch (error) {
             toast({
                 title: "Error fetching data",
@@ -373,7 +377,7 @@ export default function HomePage() {
                                               <p className="font-medium">{appt.title}</p>
                                               {appt.clientId && (
                                                 <p className="text-xs text-muted-foreground">
-                                                    {allClients.find(c => c.id === appt.clientId)?.name}
+                                                    {clients.find(c => c.id === appt.clientId)?.name}
                                                 </p>
                                               )}
                                             </div>
@@ -507,7 +511,7 @@ export default function HomePage() {
                       <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
-                      {allClients.map((client) => (
+                      {clients.map((client) => (
                         <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -560,7 +564,7 @@ export default function HomePage() {
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
-                        {allClients.map((client) => (
+                        {clients.map((client) => (
                           <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -641,5 +645,3 @@ export default function HomePage() {
     </AppShell>
   );
 }
-
-    

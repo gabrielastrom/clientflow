@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { clients as staticClients } from "@/lib/data";
 import type { TimeEntry, TeamMember, Client } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
@@ -578,5 +577,3 @@ export default function TrackingPage() {
     </AppShell>
   );
 }
-
-    

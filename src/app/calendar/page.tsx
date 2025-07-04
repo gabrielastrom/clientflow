@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { appointments as allAppointments, clients as allClients } from "@/lib/data";
+import { appointments as allAppointments } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
 import { PlusCircle, MoreHorizontal } from "lucide-react";
 import {
@@ -37,17 +37,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type Appointment } from "@/lib/types";
+import { type Appointment, type Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from "date-fns";
+import { getClients } from "@/services/clientService";
 
 
 export default function CalendarPage() {
   const [appointments, setAppointments] = React.useState<Appointment[]>(allAppointments);
+  const [clients, setClients] = React.useState<Client[]>([]);
   const [date, setDate] = React.useState<Date | undefined>(undefined);
   const [weeklyAppointments, setWeeklyAppointments] = React.useState<Appointment[]>([]);
   const [weekDates, setWeekDates] = React.useState<Date[]>([]);
@@ -61,7 +63,21 @@ export default function CalendarPage() {
   React.useEffect(() => {
     // Set date on client-side to avoid hydration mismatch
     setDate(new Date());
-  }, []);
+
+    async function fetchClientsData() {
+        try {
+            const data = await getClients();
+            setClients(data);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Could not fetch clients.",
+                variant: "destructive",
+            });
+        }
+    }
+    fetchClientsData();
+  }, [toast]);
 
   React.useEffect(() => {
     if (date) {
@@ -230,7 +246,7 @@ export default function CalendarPage() {
                                 </div>
                                 <div className="border-l pl-4 flex-1 min-w-0">
                                   <p className="font-semibold whitespace-normal truncate">{appt.title}</p>
-                                  <p className="text-sm text-muted-foreground">{allClients.find(c => c.id === appt.clientId)?.name}</p>
+                                  <p className="text-sm text-muted-foreground">{clients.find(c => c.id === appt.clientId)?.name}</p>
                                 </div>
                               </div>
                               <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -336,7 +352,7 @@ export default function CalendarPage() {
                     <SelectValue placeholder="Select a client" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allClients.map((client) => (
+                    {clients.map((client) => (
                       <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -405,7 +421,7 @@ export default function CalendarPage() {
                       <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
-                      {allClients.map((client) => (
+                      {clients.map((client) => (
                         <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -461,7 +477,7 @@ export default function CalendarPage() {
                 <div className="grid grid-cols-3 items-center gap-2">
                   <Label className="text-muted-foreground">Client</Label>
                   <p className="col-span-2 font-medium">
-                    {allClients.find(c => c.id === selectedAppointment.clientId)?.name || 'N/A'}
+                    {clients.find(c => c.id === selectedAppointment.clientId)?.name || 'N/A'}
                   </p>
                 </div>
               )}

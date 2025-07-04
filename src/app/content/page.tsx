@@ -19,8 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { clients as staticClients } from "@/lib/data";
-import { type Content, type TeamMember } from "@/lib/types";
+import { type Content, type TeamMember, type Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ExternalLink, PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
@@ -65,12 +64,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { getTeamMembers } from "@/services/teamService";
 import { getContent, addContent, updateContent, deleteContent } from "@/services/contentService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getClients } from "@/services/clientService";
 
 type SortableContentKeys = keyof Omit<Content, 'id' | 'link' | 'description'>;
 
 export default function ContentPage() {
   const [contentList, setContentList] = React.useState<Content[]>([]);
   const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
+  const [clients, setClients] = React.useState<Client[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [selectedContent, setSelectedContent] = React.useState<Content | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
@@ -85,12 +86,14 @@ export default function ContentPage() {
     async function fetchData() {
         setIsLoading(true);
         try {
-            const [contentData, teamData] = await Promise.all([
+            const [contentData, teamData, clientData] = await Promise.all([
                 getContent(),
                 getTeamMembers(),
+                getClients(),
             ]);
             setContentList(contentData);
             setTeamMembers(teamData);
+            setClients(clientData);
         } catch (error) {
             toast({
                 title: "Error fetching data",
@@ -382,7 +385,7 @@ export default function ContentPage() {
                       <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
-                      {staticClients.map((client) => (
+                      {clients.map((client) => (
                         <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                       ))}
                     </SelectContent>

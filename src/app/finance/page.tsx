@@ -18,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { revenues as initialRevenues, clients } from "@/lib/data";
-import { type Revenue } from "@/lib/types";
+import { revenues as initialRevenues } from "@/lib/data";
+import { type Revenue, type Client } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -58,11 +58,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getClients } from "@/services/clientService";
 
 type SortableRevenueKeys = keyof Revenue;
 
 export default function FinancePage() {
   const [revenues, setRevenues] = React.useState<Revenue[]>(initialRevenues);
+  const [clients, setClients] = React.useState<Client[]>([]);
   const [selectedRevenue, setSelectedRevenue] = React.useState<Revenue | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -70,6 +72,22 @@ export default function FinancePage() {
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableRevenueKeys; direction: 'ascending' | 'descending' } | null>(null);
 
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    async function fetchClientsData() {
+      try {
+        const data = await getClients();
+        setClients(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Could not fetch clients.",
+          variant: "destructive",
+        });
+      }
+    }
+    fetchClientsData();
+  }, [toast]);
 
   const sortedRevenues = React.useMemo(() => {
     let sortableItems = [...revenues];
