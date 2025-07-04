@@ -267,12 +267,15 @@ export default function HomePage() {
     return null;
   }
   
+  const name = currentUser.split('@')[0];
+  const capitalizedName = name.charAt(0).toUpperCase() + name.slice(1);
+
   return (
     <AppShell>
         <div className="flex flex-col gap-8">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Welcome back, {currentUser.split('@')[0]}!</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Welcome back, {capitalizedName}!</h1>
                 </div>
                 <div className="flex gap-2">
                     <Button onClick={() => setIsLogTimeOpen(true)}>
