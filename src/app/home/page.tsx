@@ -92,7 +92,7 @@ export default function HomePage() {
   }, [toast]);
 
   React.useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || teamMembers.length === 0) return;
     // Set default date on client-side
     setDefaultDate(new Date().toISOString().split("T")[0]);
 
@@ -151,13 +151,15 @@ export default function HomePage() {
     });
 
     const totalHours = userTimeEntriesThisMonth.reduce((sum, entry) => sum + entry.duration, 0);
-    const hourlyRate = 150;
+    
+    const currentUserData = teamMembers.find(member => member.id === user?.uid);
+    const hourlyRate = currentUserData?.hourlyRate || 0;
     const salary = totalHours * hourlyRate;
 
     setMonthlyHours(totalHours);
     setMonthlySalary(salary);
 
-  }, [timeEntries, content, currentUser, user]);
+  }, [timeEntries, content, currentUser, user, teamMembers]);
 
   const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
     switch (status) {

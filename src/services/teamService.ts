@@ -32,6 +32,7 @@ export async function upsertTeamMemberFromUser(user: User): Promise<void> {
                 phone: user.phoneNumber || '',
                 role: 'Designer', // Default role
                 assignedClients: [],
+                hourlyRate: 150, // Default hourly rate
             };
             await setDoc(teamMemberRef, newTeamMember);
         }

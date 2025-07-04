@@ -9,10 +9,10 @@ export const clients: Client[] = [
 ];
 
 export const team: TeamMember[] = [
-    { id: '1', name: 'Alex Doe', email: 'alex@clientflow.com', phone: '555-0201', role: 'Manager', assignedClients: ['Glamour Inc.', 'Peak Fitness'] },
-    { id: '2', name: 'Casey Jordan', email: 'casey@clientflow.com', phone: '555-0202', role: 'Strategist', assignedClients: ['Peak Fitness', 'The Coffee House'] },
-    { id: '3', name: 'Taylor Morgan', email: 'taylor@clientflow.com', phone: '555-0203', role: 'Designer', assignedClients: ['Glamour Inc.', 'Artisan Bakes'] },
-    { id: '4', name: 'Alex Ray', email: 'ray@clientflow.com', phone: '555-0204', role: 'Designer', assignedClients: ['Innovate Tech', 'The Coffee House'] },
+    { id: '1', name: 'Alex Doe', email: 'alex@clientflow.com', phone: '555-0201', role: 'Manager', assignedClients: ['Glamour Inc.', 'Peak Fitness'], hourlyRate: 200 },
+    { id: '2', name: 'Casey Jordan', email: 'casey@clientflow.com', phone: '555-0202', role: 'Strategist', assignedClients: ['Peak Fitness', 'The Coffee House'], hourlyRate: 180 },
+    { id: '3', name: 'Taylor Morgan', email: 'taylor@clientflow.com', phone: '555-0203', role: 'Designer', assignedClients: ['Glamour Inc.', 'Artisan Bakes'], hourlyRate: 150 },
+    { id: '4', name: 'Alex Ray', email: 'ray@clientflow.com', phone: '555-0204', role: 'Designer', assignedClients: ['Innovate Tech', 'The Coffee House'], hourlyRate: 150 },
 ];
 
 const today = new Date();

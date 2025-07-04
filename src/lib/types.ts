@@ -36,6 +36,7 @@ export type TeamMember = {
     phone: string;
     role: 'Manager' | 'Strategist' | 'Designer';
     assignedClients: string[];
+    hourlyRate: number;
 };
 
 export type Revenue = {
