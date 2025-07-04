@@ -22,25 +22,40 @@ export async function getClients(): Promise<Client[]> {
 }
 
 export async function addClient(client: Omit<Client, 'id'>): Promise<Client> {
-    const newId = doc(collection(db, 'clients')).id;
-    const newClient: Client = { ...client, id: newId };
-    await setDoc(doc(db, "clients", newId), newClient);
-    revalidatePath('/clients');
-    revalidatePath('/dashboard');
-    return newClient;
+    try {
+        const newId = doc(collection(db, 'clients')).id;
+        const newClient: Client = { ...client, id: newId };
+        await setDoc(doc(db, "clients", newId), newClient);
+        revalidatePath('/clients');
+        revalidatePath('/dashboard');
+        return newClient;
+    } catch (error) {
+        console.error("Error adding client: ", error);
+        throw new Error("Failed to add client.");
+    }
 }
 
 export async function updateClient(client: Client): Promise<void> {
-    const clientRef = doc(db, "clients", client.id);
-    await setDoc(clientRef, client, { merge: true });
-    revalidatePath('/clients');
-    revalidatePath('/dashboard');
-    revalidatePath('/home');
+    try {
+        const clientRef = doc(db, "clients", client.id);
+        await setDoc(clientRef, client, { merge: true });
+        revalidatePath('/clients');
+        revalidatePath('/dashboard');
+        revalidatePath('/home');
+    } catch (error) {
+        console.error("Error updating client: ", error);
+        throw new Error("Failed to update client.");
+    }
 }
 
 export async function deleteClient(clientId: string): Promise<void> {
-    await deleteDoc(doc(db, "clients", clientId));
-    revalidatePath('/clients');
-    revalidatePath('/dashboard');
-    revalidatePath('/home');
+    try {
+        await deleteDoc(doc(db, "clients", clientId));
+        revalidatePath('/clients');
+        revalidatePath('/dashboard');
+        revalidatePath('/home');
+    } catch (error) {
+        console.error("Error deleting client: ", error);
+        throw new Error("Failed to delete client.");
+    }
 }
