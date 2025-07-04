@@ -1,4 +1,3 @@
-'use server';
 import { auth } from '@/lib/firebase';
 import { 
   createUserWithEmailAndPassword, 
