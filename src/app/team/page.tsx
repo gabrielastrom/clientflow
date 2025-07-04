@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type TeamMember } from "@/lib/types";
+import { type TeamMember, type Client } from "@/lib/types";
 import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -59,36 +59,45 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { getTeamMembers, updateTeamMember, deleteTeamMember } from "@/services/teamService";
+import { getClients } from "@/services/clientService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SortableTeamKeys = keyof TeamMember;
 
 export default function TeamPage() {
   const [team, setTeam] = React.useState<TeamMember[]>([]);
+  const [clients, setClients] = React.useState<Client[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [selectedMember, setSelectedMember] = React.useState<TeamMember | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableTeamKeys; direction: 'ascending' | 'descending' } | null>(null);
+  const [clientsForEdit, setClientsForEdit] = React.useState<string[]>([]);
   const { toast } = useToast();
 
   React.useEffect(() => {
-    async function fetchTeam() {
+    async function fetchData() {
         setIsLoading(true);
         try {
-            const teamData = await getTeamMembers();
+            const [teamData, clientData] = await Promise.all([
+                getTeamMembers(),
+                getClients()
+            ]);
             setTeam(teamData);
+            setClients(clientData);
         } catch (error) {
             toast({
-                title: "Error fetching team",
-                description: "Could not load team from the database.",
+                title: "Error fetching data",
+                description: "Could not load data from the database.",
                 variant: "destructive"
             });
         } finally {
             setIsLoading(false);
         }
     }
-    fetchTeam();
+    fetchData();
   }, [toast]);
 
 
@@ -133,6 +142,14 @@ export default function TeamPage() {
     }
     return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
   };
+
+  const handleClientSelectionChange = (clientName: string, checked: boolean | 'indeterminate') => {
+    if (checked) {
+        setClientsForEdit(prev => [...prev, clientName]);
+    } else {
+        setClientsForEdit(prev => prev.filter(name => name !== clientName));
+    }
+  };
   
   const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -145,7 +162,7 @@ export default function TeamPage() {
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       role: formData.get("role") as TeamMember["role"],
-      assignedClients: (formData.get("assignedClients") as string).split(",").map(c => c.trim()).filter(Boolean),
+      assignedClients: clientsForEdit,
     };
 
     try {
@@ -279,7 +296,7 @@ export default function TeamPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsEditOpen(true); }}>
+                          <DropdownMenuItem onSelect={() => { setSelectedMember(member); setClientsForEdit(member.assignedClients); setIsEditOpen(true); }}>
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -298,7 +315,7 @@ export default function TeamPage() {
       </Card>
       
       {/* Edit Dialog */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog open={isEditOpen} onOpenChange={(open) => { setIsEditOpen(open); if(!open) setSelectedMember(null); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Team Member</DialogTitle>
@@ -334,9 +351,40 @@ export default function TeamPage() {
                       </SelectContent>
                     </Select>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="assignedClients" className="text-right">Clients</Label>
-                  <Input id="assignedClients" name="assignedClients" defaultValue={selectedMember.assignedClients.join(", ")} className="col-span-3" placeholder="Comma-separated names" />
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label className="text-right pt-2">Clients</Label>
+                   <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="col-span-3 justify-start text-left font-normal h-auto min-h-10">
+                        <div className="flex flex-wrap gap-1">
+                          {clientsForEdit.length > 0 ? (
+                            clientsForEdit.map(clientName => (
+                                <Badge key={clientName} variant="secondary">{clientName}</Badge>
+                            ))
+                          ) : (
+                            "Select clients"
+                          )}
+                        </div>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <div className="flex flex-col gap-1 p-2">
+                        {clients.map((client) => (
+                          <Label
+                            key={client.id}
+                            className="flex items-center gap-2 font-normal p-2 rounded-md hover:bg-muted"
+                          >
+                            <Checkbox
+                              id={`client-edit-${client.id}`}
+                              checked={clientsForEdit.includes(client.name)}
+                              onCheckedChange={(checked) => handleClientSelectionChange(client.name, checked)}
+                            />
+                            {client.name}
+                          </Label>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               <DialogFooter>
