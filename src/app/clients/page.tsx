@@ -20,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { clients as initialClients, content as initialContent } from "@/lib/data";
 import { type Client, type Content } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
 import {
@@ -63,13 +62,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { getClients, addClient, updateClient, deleteClient } from "@/services/clientService";
+import { getContent } from "@/services/contentService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ClientsPage() {
-  const [clients, setClients] = React.useState<Client[]>(initialClients);
-  const [contentList, setContentList] = React.useState<Content[]>(initialContent);
-  const [selectedClient, setSelectedClient] = React.useState<Client | null>(
-    null
-  );
+  const [clients, setClients] = React.useState<Client[]>([]);
+  const [contentList, setContentList] = React.useState<Content[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [selectedClient, setSelectedClient] = React.useState<Client | null>(null);
   const [isViewOpen, setIsViewOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
@@ -80,6 +81,30 @@ export default function ClientsPage() {
   const [isContentViewOpen, setIsContentViewOpen] = React.useState(false);
 
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    async function fetchData() {
+        setIsLoading(true);
+        try {
+            const [clientsData, contentData] = await Promise.all([
+                getClients(),
+                getContent(),
+            ]);
+            setClients(clientsData);
+            setContentList(contentData);
+        } catch (error) {
+            toast({
+                title: "Error fetching data",
+                description: "Could not load data from the database.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
+
 
   const handleNoteChange = (clientId: string, note: string) => {
     setClientNotes((prevNotes) => ({
@@ -124,11 +149,10 @@ export default function ClientsPage() {
     return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
   };
 
-  const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newClient: Client = {
-      id: `${Date.now()}`,
+    const newClientData: Omit<Client, 'id'> = {
       name: formData.get("name") as string,
       contactPerson: formData.get("contactPerson") as string,
       email: formData.get("email") as string,
@@ -137,12 +161,18 @@ export default function ClientsPage() {
       joinDate: new Date().toLocaleDateString('en-CA'),
       monthlyVideos: parseInt(formData.get("monthlyVideos") as string, 10) || 0,
     };
-    setClients((prevClients) => [newClient, ...prevClients]);
-    setIsAddOpen(false);
-    toast({ title: "Success", description: "Client added successfully." });
+
+    try {
+        const newClient = await addClient(newClientData);
+        setClients((prevClients) => [newClient, ...prevClients]);
+        setIsAddOpen(false);
+        toast({ title: "Success", description: "Client added successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not add client.", variant: "destructive" });
+    }
   };
 
-  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedClient) return;
 
@@ -156,23 +186,30 @@ export default function ClientsPage() {
       status: formData.get("status") as Client["status"],
       monthlyVideos: parseInt(formData.get("monthlyVideos") as string, 10) || 0,
     };
-
-    setClients(
-      clients.map((c) => (c.id === updatedClient.id ? updatedClient : c))
-    );
-    setIsEditOpen(false);
-    toast({ title: "Success", description: "Client updated successfully." });
+    
+    try {
+        await updateClient(updatedClient);
+        setClients(clients.map((c) => (c.id === updatedClient.id ? updatedClient : c)));
+        setIsEditOpen(false);
+        toast({ title: "Success", description: "Client updated successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update client.", variant: "destructive" });
+    }
   };
 
-  const handleDeleteClient = () => {
+  const handleDeleteClient = async () => {
     if (!selectedClient) return;
-    setClients(clients.filter((c) => c.id !== selectedClient.id));
-    setIsDeleteAlertOpen(false);
-    toast({
-      title: "Client Deleted",
-      description: `${selectedClient.name} has been removed.`,
-      variant: "destructive",
-    });
+    try {
+        await deleteClient(selectedClient.id);
+        setClients(clients.filter((c) => c.id !== selectedClient.id));
+        setIsDeleteAlertOpen(false);
+        toast({
+          title: "Client Deleted",
+          description: `${selectedClient.name} has been removed.`,
+        });
+    } catch (error) {
+         toast({ title: "Error", description: "Could not delete client.", variant: "destructive" });
+    }
   };
 
   const getStatusBadgeClassName = (status: 'To Do' | 'In Progress' | 'In Review' | 'Done') => {
@@ -199,7 +236,7 @@ export default function ClientsPage() {
             Manage your client accounts and information.
           </p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)}>
+        <Button onClick={() => setIsAddOpen(true)} disabled={isLoading}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Client
         </Button>
@@ -265,83 +302,104 @@ export default function ClientsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedClients.map((client) => (
-                    <TableRow key={client.id}>
-                      <TableCell className="font-medium">{client.name}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            client.status === "Active"
-                              ? "default"
-                              : client.status === "Lead"
-                              ? "secondary"
-                              : "outline"
-                          }
-                          className={
-                            client.status === "Active"
-                              ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
-                              : ""
-                          }
-                        >
-                          {client.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{client.contactPerson}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {client.email}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {client.phone}
-                      </TableCell>
-                      <TableCell>{client.monthlyVideos}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {client.joinDate}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              aria-haspopup="true"
-                              size="icon"
-                              variant="ghost"
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onSelect={() => {
-                                setSelectedClient(client);
-                                setIsEditOpen(true);
-                              }}
-                            >
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() => {
-                                setSelectedClient(client);
-                                setIsViewOpen(true);
-                              }}
-                            >
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                              onSelect={() => {
-                                setSelectedClient(client);
-                                setIsDeleteAlertOpen(true);
-                              }}
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-40" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : sortedClients.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={8} className="h-24 text-center">
+                            No clients found. Try seeding the database from the Settings page.
+                        </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    sortedClients.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell className="font-medium">{client.name}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              client.status === "Active"
+                                ? "default"
+                                : client.status === "Lead"
+                                ? "secondary"
+                                : "outline"
+                            }
+                            className={
+                              client.status === "Active"
+                                ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
+                                : ""
+                            }
+                          >
+                            {client.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{client.contactPerson}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {client.email}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {client.phone}
+                        </TableCell>
+                        <TableCell>{client.monthlyVideos}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {client.joinDate}
+                        </TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                aria-haspopup="true"
+                                size="icon"
+                                variant="ghost"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  setSelectedClient(client);
+                                  setIsEditOpen(true);
+                                }}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  setSelectedClient(client);
+                                  setIsViewOpen(true);
+                                }}
+                              >
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                onSelect={() => {
+                                  setSelectedClient(client);
+                                  setIsDeleteAlertOpen(true);
+                                }}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -356,7 +414,13 @@ export default function ClientsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {sortedClients.length > 0 ? (
+            {isLoading || sortedClients.length === 0 ? (
+              <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
+                <p>
+                  {isLoading ? 'Loading client documentation...' : 'No clients available to document. Add a client to get started.'}
+                </p>
+              </div>
+            ) : (
               <Tabs defaultValue={sortedClients[0].id} className="w-full">
                 <TabsList className="h-auto flex-wrap justify-start">
                   {sortedClients.map((client) => (
@@ -378,13 +442,6 @@ export default function ClientsPage() {
                   </TabsContent>
                 ))}
               </Tabs>
-            ) : (
-              <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
-                <p>
-                  No clients available to document. Add a client to get
-                  started.
-                </p>
-              </div>
             )}
           </CardContent>
         </Card>
@@ -396,7 +453,13 @@ export default function ClientsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {sortedClients.length > 0 ? (
+            {isLoading || sortedClients.length === 0 ? (
+                <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
+                    <p>
+                        {isLoading ? 'Loading client content...' : 'No clients available to view content for.'}
+                    </p>
+                </div>
+            ) : (
               <Tabs defaultValue={sortedClients[0].id} className="w-full">
                 <TabsList className="h-auto flex-wrap justify-start">
                   {sortedClients.map((client) => (
@@ -485,12 +548,6 @@ export default function ClientsPage() {
                   )
                 })}
               </Tabs>
-            ) : (
-              <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
-                <p>
-                  No clients available to view content for.
-                </p>
-              </div>
             )}
           </CardContent>
         </Card>
