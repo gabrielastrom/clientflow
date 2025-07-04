@@ -158,7 +158,7 @@ export default function ClientsPage() {
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       status: formData.get("status") as Client["status"],
-      joinDate: new Date().toLocaleDateString('en-CA'),
+      joinDate: formData.get("joinDate") as string,
       monthlyVideos: parseInt(formData.get("monthlyVideos") as string, 10) || 0,
     };
 
@@ -185,6 +185,7 @@ export default function ClientsPage() {
       phone: formData.get("phone") as string,
       status: formData.get("status") as Client["status"],
       monthlyVideos: parseInt(formData.get("monthlyVideos") as string, 10) || 0,
+      joinDate: formData.get("joinDate") as string,
     };
     
     try {
@@ -623,6 +624,19 @@ export default function ClientsPage() {
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="joinDate" className="text-right">
+                  Join Date
+                </Label>
+                <Input
+                  id="joinDate"
+                  name="joinDate"
+                  type="date"
+                  defaultValue={new Date().toLocaleDateString('en-CA')}
+                  className="col-span-3"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="status" className="text-right">
                   Status
                 </Label>
@@ -781,6 +795,19 @@ export default function ClientsPage() {
                     name="monthlyVideos"
                     type="number"
                     defaultValue={selectedClient.monthlyVideos}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="joinDate" className="text-right">
+                    Join Date
+                  </Label>
+                  <Input
+                    id="joinDate"
+                    name="joinDate"
+                    type="date"
+                    defaultValue={selectedClient.joinDate}
                     className="col-span-3"
                     required
                   />
