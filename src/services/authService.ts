@@ -6,9 +6,11 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from "firebase/auth";
+import { upsertTeamMemberFromUser } from './teamService';
 
 export async function signUp(email: string, password: string): Promise<void> {
-  await createUserWithEmailAndPassword(auth, email, password);
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  await upsertTeamMemberFromUser(userCredential.user);
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
@@ -17,7 +19,8 @@ export async function signIn(email: string, password: string): Promise<void> {
 
 export async function signInWithGoogle(): Promise<void> {
   const provider = new GoogleAuthProvider();
-  await signInWithPopup(auth, provider);
+  const userCredential = await signInWithPopup(auth, provider);
+  await upsertTeamMemberFromUser(userCredential.user);
 }
 
 export async function signOut(): Promise<void> {

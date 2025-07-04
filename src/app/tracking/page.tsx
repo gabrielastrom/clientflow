@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -19,8 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { timeEntries as initialTimeEntries, clients, teamMembers } from "@/lib/data";
-import type { TimeEntry } from "@/lib/types";
+import { timeEntries as initialTimeEntries, clients as staticClients } from "@/lib/data";
+import type { TimeEntry, TeamMember } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -49,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getTeamMembers } from "@/services/teamService";
 
 type SortableTimeEntryKeys = keyof TimeEntry;
 
@@ -59,6 +59,7 @@ type MonthlySummary = {
 
 export default function TrackingPage() {
   const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>(initialTimeEntries);
+  const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
   const [isLogTimeOpen, setIsLogTimeOpen] = React.useState(false);
   const [selectedEntry, setSelectedEntry] = React.useState<TimeEntry | null>(null);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -83,7 +84,22 @@ export default function TrackingPage() {
       // If no entries, default to current month
       setSelectedMonth(now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2));
     }
-  }, []);
+
+    async function fetchTeam() {
+      try {
+        const teamData = await getTeamMembers();
+        setTeamMembers(teamData);
+      } catch (error) {
+        toast({
+          title: "Error fetching team",
+          description: "Could not load team from the database.",
+          variant: "destructive"
+        });
+      }
+    }
+    fetchTeam();
+
+  }, [toast]);
 
   React.useEffect(() => {
     if (!selectedMonth) return;
@@ -225,13 +241,13 @@ export default function TrackingPage() {
                     <Label htmlFor="teamMember" className="text-right">
                       Team Member
                     </Label>
-                    <Select name="teamMember" defaultValue={teamMembers[0]}>
+                    <Select name="teamMember">
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Select a member" />
                       </SelectTrigger>
                       <SelectContent>
                         {teamMembers.map((member) => (
-                          <SelectItem key={member} value={member}>{member}</SelectItem>
+                          <SelectItem key={member.id} value={member.name}>{member.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -240,12 +256,12 @@ export default function TrackingPage() {
                     <Label htmlFor="client" className="text-right">
                       Client
                     </Label>
-                    <Select name="client" defaultValue={clients[0].name}>
+                    <Select name="client" defaultValue={staticClients[0].name}>
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map((client) => (
+                        {staticClients.map((client) => (
                           <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -384,7 +400,7 @@ export default function TrackingPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {teamMembers.map((member) => (
-                          <SelectItem key={member} value={member}>{member}</SelectItem>
+                          <SelectItem key={member.id} value={member.name}>{member.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -396,7 +412,7 @@ export default function TrackingPage() {
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map((client) => (
+                        {staticClients.map((client) => (
                           <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -461,5 +477,3 @@ export default function TrackingPage() {
     </AppShell>
   );
 }
-
-    

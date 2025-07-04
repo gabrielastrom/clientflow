@@ -1,8 +1,9 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { Content } from '@/lib/types';
+import { revalidatePath } from 'next/cache';
 
 export async function getContent(): Promise<Content[]> {
     try {
@@ -16,6 +17,43 @@ export async function getContent(): Promise<Content[]> {
         return list;
     } catch (error) {
         console.error("Error fetching content: ", error);
-        return [];
+        throw new Error("Could not fetch content.");
+    }
+}
+
+export async function addContent(content: Omit<Content, 'id'>): Promise<Content> {
+    try {
+        const newId = doc(collection(db, 'content')).id;
+        const newContent: Content = { ...content, id: newId };
+        await setDoc(doc(db, "content", newId), newContent);
+        revalidatePath('/content');
+        revalidatePath('/home');
+        return newContent;
+    } catch (error) {
+        console.error("Error adding content: ", error);
+        throw new Error("Failed to add content.");
+    }
+}
+
+export async function updateContent(content: Content): Promise<void> {
+    try {
+        const contentRef = doc(db, "content", content.id);
+        await setDoc(contentRef, content, { merge: true });
+        revalidatePath('/content');
+        revalidatePath('/home');
+    } catch (error) {
+        console.error("Error updating content: ", error);
+        throw new Error("Failed to update content.");
+    }
+}
+
+export async function deleteContent(contentId: string): Promise<void> {
+    try {
+        await deleteDoc(doc(db, "content", contentId));
+        revalidatePath('/content');
+        revalidatePath('/home');
+    } catch (error) {
+        console.error("Error deleting content: ", error);
+        throw new Error("Failed to delete content.");
     }
 }

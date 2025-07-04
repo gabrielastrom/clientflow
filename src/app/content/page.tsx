@@ -19,8 +19,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { content as initialContent, clients, teamMembers } from "@/lib/data";
-import { type Content } from "@/lib/types";
+import { clients as staticClients } from "@/lib/data";
+import { type Content, type TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ExternalLink, PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import Link from "next/link";
@@ -62,11 +62,16 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { getTeamMembers } from "@/services/teamService";
+import { getContent, addContent, updateContent, deleteContent } from "@/services/contentService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SortableContentKeys = keyof Omit<Content, 'id' | 'link' | 'description'>;
 
 export default function ContentPage() {
-  const [contentList, setContentList] = React.useState<Content[]>(initialContent);
+  const [contentList, setContentList] = React.useState<Content[]>([]);
+  const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [selectedContent, setSelectedContent] = React.useState<Content | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -75,6 +80,30 @@ export default function ContentPage() {
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableContentKeys; direction: 'ascending' | 'descending' } | null>(null);
 
   const { toast } = useToast();
+  
+  React.useEffect(() => {
+    async function fetchData() {
+        setIsLoading(true);
+        try {
+            const [contentData, teamData] = await Promise.all([
+                getContent(),
+                getTeamMembers(),
+            ]);
+            setContentList(contentData);
+            setTeamMembers(teamData);
+        } catch (error) {
+            toast({
+                title: "Error fetching data",
+                description: "Could not load data from the database.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [toast]);
+
 
   const sortedContent = React.useMemo(() => {
     let sortableItems = [...contentList];
@@ -127,11 +156,10 @@ export default function ContentPage() {
     }
   };
 
-  const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newContent: Content = {
-      id: `${Date.now()}`,
+    const newContentData: Omit<Content, "id"> = {
       title: formData.get("title") as string,
       client: formData.get("client") as string,
       status: formData.get("status") as Content["status"],
@@ -141,17 +169,22 @@ export default function ContentPage() {
       link: formData.get("link") as string || undefined,
       description: formData.get("description") as string || undefined,
     };
-    setContentList((prev) => [newContent, ...prev]);
-    setIsAddOpen(false);
-    toast({ title: "Success", description: "Content item added successfully." });
+    try {
+        const newContent = await addContent(newContentData);
+        setContentList((prev) => [newContent, ...prev]);
+        setIsAddOpen(false);
+        toast({ title: "Success", description: "Content item added successfully." });
+    } catch(error) {
+        toast({ title: "Error", description: "Could not add content item.", variant: "destructive" });
+    }
   };
   
-  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedContent) return;
 
     const formData = new FormData(event.currentTarget);
-    const updatedContent: Content = {
+    const updatedContentData: Content = {
       ...selectedContent,
       title: formData.get("title") as string,
       client: formData.get("client") as string,
@@ -162,23 +195,29 @@ export default function ContentPage() {
       link: formData.get("link") as string || undefined,
       description: formData.get("description") as string || undefined,
     };
-
-    setContentList(
-      contentList.map((c) => (c.id === updatedContent.id ? updatedContent : c))
-    );
-    setIsEditOpen(false);
-    toast({ title: "Success", description: "Content item updated successfully." });
+    try {
+        await updateContent(updatedContentData);
+        setContentList(contentList.map((c) => (c.id === updatedContentData.id ? updatedContentData : c)));
+        setIsEditOpen(false);
+        toast({ title: "Success", description: "Content item updated successfully." });
+    } catch(error) {
+        toast({ title: "Error", description: "Could not update content item.", variant: "destructive" });
+    }
   };
   
-  const handleDeleteContent = () => {
+  const handleDeleteContent = async () => {
     if (!selectedContent) return;
-    setContentList(contentList.filter((c) => c.id !== selectedContent.id));
-    setIsDeleteAlertOpen(false);
-    toast({
-      title: "Content Item Deleted",
-      description: `"${selectedContent.title}" has been removed.`,
-      variant: "destructive",
-    });
+    try {
+        await deleteContent(selectedContent.id);
+        setContentList(contentList.filter((c) => c.id !== selectedContent.id));
+        setIsDeleteAlertOpen(false);
+        toast({
+          title: "Content Item Deleted",
+          description: `"${selectedContent.title}" has been removed.`,
+        });
+    } catch(error) {
+        toast({ title: "Error", description: "Could not delete content item.", variant: "destructive" });
+    }
   };
 
   return (
@@ -190,7 +229,7 @@ export default function ContentPage() {
             Manage all content production for your clients.
           </p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)}>
+        <Button onClick={() => setIsAddOpen(true)} disabled={isLoading}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Content
         </Button>
@@ -247,54 +286,75 @@ export default function ContentPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedContent.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.title}</TableCell>
-                  <TableCell>{item.client}</TableCell>
-                  <TableCell>
-                    <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{item.platform}</TableCell>
-                  <TableCell>{item.deadline}</TableCell>
-                  <TableCell>{item.owner}</TableCell>
-                  <TableCell>
-                    {item.link ? (
-                      <Button asChild variant="ghost" size="icon">
-                        <Link href={item.link} target="_blank">
-                          <ExternalLink className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                         <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsViewOpen(true); }}>
-                          View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsEditOpen(true); }}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedContent(item); setIsDeleteAlertOpen(true); }}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : sortedContent.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                        No content found. Add content to get started.
+                    </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                sortedContent.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.title}</TableCell>
+                    <TableCell>{item.client}</TableCell>
+                    <TableCell>
+                      <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{item.platform}</TableCell>
+                    <TableCell>{item.deadline}</TableCell>
+                    <TableCell>{item.owner}</TableCell>
+                    <TableCell>
+                      {item.link ? (
+                        <Button asChild variant="ghost" size="icon">
+                          <Link href={item.link} target="_blank">
+                            <ExternalLink className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                     <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                           <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsViewOpen(true); }}>
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsEditOpen(true); }}>
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedContent(item); setIsDeleteAlertOpen(true); }}>
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -322,7 +382,7 @@ export default function ContentPage() {
                       <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
-                      {clients.map((client) => (
+                      {staticClients.map((client) => (
                         <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -368,7 +428,7 @@ export default function ContentPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {teamMembers.map((member) => (
-                        <SelectItem key={member} value={member}>{member}</SelectItem>
+                        <SelectItem key={member.id} value={member.name}>{member.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

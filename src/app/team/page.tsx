@@ -18,9 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { team as initialTeam } from "@/lib/data";
 import { type TeamMember } from "@/lib/types";
-import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,24 +58,46 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { getTeamMembers, updateTeamMember, deleteTeamMember } from "@/services/teamService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SortableTeamKeys = keyof TeamMember;
 
 export default function TeamPage() {
-  const [team, setTeam] = React.useState<TeamMember[]>(initialTeam);
+  const [team, setTeam] = React.useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [selectedMember, setSelectedMember] = React.useState<TeamMember | null>(null);
-  const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableTeamKeys; direction: 'ascending' | 'descending' } | null>(null);
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    async function fetchTeam() {
+        setIsLoading(true);
+        try {
+            const teamData = await getTeamMembers();
+            setTeam(teamData);
+        } catch (error) {
+            toast({
+                title: "Error fetching team",
+                description: "Could not load team from the database.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchTeam();
+  }, [toast]);
+
+
   const sortedTeam = React.useMemo(() => {
     let sortableItems = [...team];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
-        let aValue: string | number = a[sortConfig.key] as string | number;
-        let bValue: string | number = b[sortConfig.key] as string | number;
+        let aValue: string | number | string[] = a[sortConfig.key];
+        let bValue: string | number | string[] = b[sortConfig.key];
         
         if (sortConfig.key === 'assignedClients') {
           aValue = a.assignedClients.length;
@@ -112,24 +133,8 @@ export default function TeamPage() {
     }
     return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
   };
-
-  const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const newMember: TeamMember = {
-      id: `${Date.now()}`,
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      phone: formData.get("phone") as string,
-      role: formData.get("role") as TeamMember["role"],
-      assignedClients: (formData.get("assignedClients") as string).split(",").map(c => c.trim()),
-    };
-    setTeam((prev) => [newMember, ...prev]);
-    setIsAddOpen(false);
-    toast({ title: "Success", description: "Team member added successfully." });
-  };
   
-  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedMember) return;
 
@@ -140,25 +145,32 @@ export default function TeamPage() {
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       role: formData.get("role") as TeamMember["role"],
-      assignedClients: (formData.get("assignedClients") as string).split(",").map(c => c.trim()),
+      assignedClients: (formData.get("assignedClients") as string).split(",").map(c => c.trim()).filter(Boolean),
     };
 
-    setTeam(
-      team.map((m) => (m.id === updatedMember.id ? updatedMember : m))
-    );
-    setIsEditOpen(false);
-    toast({ title: "Success", description: "Team member updated successfully." });
+    try {
+        await updateTeamMember(updatedMember);
+        setTeam(team.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
+        setIsEditOpen(false);
+        toast({ title: "Success", description: "Team member updated successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update team member.", variant: "destructive" });
+    }
   };
 
-  const handleDeleteMember = () => {
+  const handleDeleteMember = async () => {
     if (!selectedMember) return;
-    setTeam(team.filter((m) => m.id !== selectedMember.id));
-    setIsDeleteAlertOpen(false);
-    toast({
-      title: "Team Member Deleted",
-      description: `${selectedMember.name} has been removed.`,
-      variant: "destructive",
-    });
+    try {
+        await deleteTeamMember(selectedMember.id);
+        setTeam(team.filter((m) => m.id !== selectedMember.id));
+        setIsDeleteAlertOpen(false);
+        toast({
+          title: "Team Member Deleted",
+          description: `${selectedMember.name} has been removed.`,
+        });
+    } catch (error) {
+         toast({ title: "Error", description: "Could not delete team member.", variant: "destructive" });
+    }
   };
 
   return (
@@ -167,13 +179,9 @@ export default function TeamPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Team</h1>
           <p className="text-muted-foreground">
-            Manage your team members and their roles.
+            Manage your team members and their roles. New members are added when they sign up.
           </p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Team Member
-        </Button>
       </div>
       <Card>
         <CardHeader>
@@ -222,100 +230,121 @@ export default function TeamPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedTeam.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">{member.name}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {member.email}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {member.phone}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{member.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {member.assignedClients.map((clientName) => (
-                        <Badge key={clientName} variant="secondary">
-                          {clientName}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsEditOpen(true); }}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedMember(member); setIsDeleteAlertOpen(true); }}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+             {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-40" /></TableCell>
+                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                  </TableRow>
+                ))
+              ) : sortedTeam.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                        No team members found. New members are added when they sign up.
+                    </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                sortedTeam.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {member.email}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {member.phone}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{member.role}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {member.assignedClients.map((clientName) => (
+                          <Badge key={clientName} variant="secondary">
+                            {clientName}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => { setSelectedMember(member); setIsEditOpen(true); }}>
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedMember(member); setIsDeleteAlertOpen(true); }}>
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
       
-      {/* Add/Edit Dialog */}
-      <Dialog open={isAddOpen || isEditOpen} onOpenChange={isAddOpen ? setIsAddOpen : setIsEditOpen}>
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isAddOpen ? "Add New Team Member" : "Edit Team Member"}</DialogTitle>
+            <DialogTitle>Edit Team Member</DialogTitle>
             <DialogDescription>
-              {isAddOpen ? "Fill in the details for the new team member." : "Make changes to the team member's profile."}
+              Make changes to the team member's profile.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={isAddOpen ? handleAddSubmit : handleEditSubmit}>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">Name</Label>
-                <Input id="name" name="name" defaultValue={selectedMember?.name} className="col-span-3" required />
+          {selectedMember && (
+            <form onSubmit={handleEditSubmit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">Name</Label>
+                  <Input id="name" name="name" defaultValue={selectedMember.name} className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="email" className="text-right">Email</Label>
+                  <Input id="email" name="email" type="email" defaultValue={selectedMember.email} className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="phone" className="text-right">Phone</Label>
+                  <Input id="phone" name="phone" defaultValue={selectedMember.phone} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="role" className="text-right">Role</Label>
+                   <Select name="role" defaultValue={selectedMember.role}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Manager">Manager</SelectItem>
+                        <SelectItem value="Strategist">Strategist</SelectItem>
+                        <SelectItem value="Designer">Designer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="assignedClients" className="text-right">Clients</Label>
+                  <Input id="assignedClients" name="assignedClients" defaultValue={selectedMember.assignedClients.join(", ")} className="col-span-3" placeholder="Comma-separated names" />
+                </div>
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">Email</Label>
-                <Input id="email" name="email" type="email" defaultValue={selectedMember?.email} className="col-span-3" required />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">Phone</Label>
-                <Input id="phone" name="phone" defaultValue={selectedMember?.phone} className="col-span-3" required />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">Role</Label>
-                 <Select name="role" defaultValue={selectedMember?.role ?? "Designer"}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Manager">Manager</SelectItem>
-                      <SelectItem value="Strategist">Strategist</SelectItem>
-                      <SelectItem value="Designer">Designer</SelectItem>
-                    </SelectContent>
-                  </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="assignedClients" className="text-right">Clients</Label>
-                <Input id="assignedClients" name="assignedClients" defaultValue={selectedMember?.assignedClients.join(", ")} className="col-span-3" placeholder="Comma-separated names" />
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-              <Button type="submit">{isAddOpen ? "Add Member" : "Save Changes"}</Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
       

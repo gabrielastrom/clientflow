@@ -36,18 +36,22 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { content as allContent, clients, timeEntries as initialTimeEntries, teamMembers, appointments as allAppointments } from "@/lib/data";
-import { type Content, type TimeEntry, type Appointment } from "@/lib/types";
+import { clients as allClients, timeEntries as initialTimeEntries, appointments as allAppointments } from "@/lib/data";
+import { type Content, type TimeEntry, type Appointment, type TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth, format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { Mail, MessageSquare, HardDrive, PlusCircle, Clock, DollarSign } from 'lucide-react';
 import { useAuth } from "@/contexts/auth-context";
+import { getTeamMembers } from "@/services/teamService";
+import { getContent } from "@/services/contentService";
+
 
 export default function HomePage() {
   const { user } = useAuth();
   const currentUser = user?.displayName || user?.email || "";
 
-  const [content, setContent] = React.useState<Content[]>(allContent);
+  const [content, setContent] = React.useState<Content[]>([]);
+  const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
   const [weeklyTasks, setWeeklyTasks] = React.useState<Content[]>([]);
   const [monthlyTasks, setMonthlyTasks] = React.useState<Content[]>([]);
   const [monthlyProgress, setMonthlyProgress] = React.useState(0);
@@ -67,6 +71,26 @@ export default function HomePage() {
 
   const { toast } = useToast();
 
+   React.useEffect(() => {
+    async function fetchData() {
+        try {
+            const [contentData, teamData] = await Promise.all([
+                getContent(),
+                getTeamMembers(),
+            ]);
+            setContent(contentData);
+            setTeamMembers(teamData);
+        } catch (error) {
+            toast({
+                title: "Error fetching data",
+                description: "Could not load data from the database.",
+                variant: "destructive"
+            });
+        }
+    }
+    fetchData();
+  }, [toast]);
+
   React.useEffect(() => {
     if (!currentUser) return;
     // Set default date on client-side
@@ -80,9 +104,6 @@ export default function HomePage() {
 
     // Filter user tasks
     const userContent = content.filter(item => {
-        // A simple check to see if the owner is the current user.
-        // For email-based users, we can check if the email matches. For display names, it might be less reliable.
-        // This logic can be improved based on how user identity is stored.
         return item.owner === user?.displayName || item.owner === user?.email;
     });
     
@@ -326,7 +347,7 @@ export default function HomePage() {
                                               <p className="font-medium">{appt.title}</p>
                                               {appt.clientId && (
                                                 <p className="text-xs text-muted-foreground">
-                                                    {clients.find(c => c.id === appt.clientId)?.name}
+                                                    {allClients.find(c => c.id === appt.clientId)?.name}
                                                 </p>
                                               )}
                                             </div>
@@ -446,7 +467,7 @@ export default function HomePage() {
                     </SelectTrigger>
                     <SelectContent>
                       {teamMembers.map((member) => (
-                        <SelectItem key={member} value={member}>{member}</SelectItem>
+                        <SelectItem key={member.id} value={member.name}>{member.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -460,7 +481,7 @@ export default function HomePage() {
                       <SelectValue placeholder="Select a client" />
                     </SelectTrigger>
                     <SelectContent>
-                      {clients.map((client) => (
+                      {allClients.map((client) => (
                         <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -513,7 +534,7 @@ export default function HomePage() {
                         <SelectValue placeholder="Select a client" />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map((client) => (
+                        {allClients.map((client) => (
                           <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                         ))}
                       </SelectContent>
