@@ -22,7 +22,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signIn(email, password);
-      router.push("/home");
+      // The AuthProvider will handle the redirect
     } catch (error: any) {
       toast({
         title: "Sign-in failed",
@@ -38,7 +38,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-      router.push('/home');
+      // The AuthProvider will handle the redirect
     } catch (error: any) {
       toast({
         title: "Google Sign-in Failed",
