@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -11,23 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
-import { seedDatabase } from "./actions";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const [isSeeding, setIsSeeding] = React.useState(false);
-
-  const handleSeedDatabase = async () => {
-    setIsSeeding(true);
-    const result = await seedDatabase();
-    if (result.success) {
-      toast({ title: "Success", description: result.message });
-    } else {
-      toast({ title: "Error", description: result.message, variant: "destructive" });
-    }
-    setIsSeeding(false);
-  };
 
   return (
     <AppShell>
@@ -115,20 +101,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Database</CardTitle>
-            <CardDescription>Seed the database with initial mock data. This only needs to be done once.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleSeedDatabase} disabled={isSeeding}>
-              {isSeeding ? 'Seeding...' : 'Seed Database with Mock Data'}
-            </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              This will populate your Firestore database with the initial set of clients, team members, etc. It will not overwrite existing data.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </AppShell>
   );
