@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signInWithGoogle } from "@/services/authService";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -53,11 +53,11 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="mx-auto max-w-sm w-full">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center items-center gap-2">
             <Logo />
+            <span className="text-2xl font-bold">ClientFlow</span>
           </div>
-          <CardTitle className="text-2xl">Welcome Back!</CardTitle>
           <CardDescription>
             Enter your credentials to access your account
           </CardDescription>
