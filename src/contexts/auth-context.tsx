@@ -5,6 +5,7 @@ import { onAuthStateChanged, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { usePathname, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { upsertTeamMemberFromUser } from "@/services/teamService";
 
 type AuthContextType = {
   user: User | null;
@@ -37,7 +38,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Every time auth state changes, ensure the user profile exists in Firestore.
+        await upsertTeamMemberFromUser(user);
+      }
       setUser(user);
       setIsLoading(false);
     });
