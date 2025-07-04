@@ -9,9 +9,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
-import { financialData, appointments as allAppointments, team, timeEntries, content, clients } from "@/lib/data";
-import { type Appointment } from "@/lib/types";
-import { Clock } from "lucide-react";
+import { financialData, appointments as allAppointments, timeEntries, content, clients } from "@/lib/data";
+import { type Appointment, type TeamMember } from "@/lib/types";
+import { Clock, DollarSign } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,8 @@ import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from 'da
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import RevenueByClientChart from "./revenue-by-client-chart";
+import { getTeamMembers } from "@/services/teamService";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type TeamPerformanceData = {
   id: string;
@@ -33,13 +35,13 @@ export default function DashboardPage() {
   const [weekDates, setWeekDates] = React.useState<Date[]>([]);
   const [doneContentCount, setDoneContentCount] = React.useState(0);
   const [totalContentCount, setTotalContentCount] = React.useState(0);
+  const [team, setTeam] = React.useState<TeamMember[]>([]);
   const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
+  const [isLoadingTeam, setIsLoadingTeam] = React.useState(true);
 
   React.useEffect(() => {
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-
+    
     // Calculate weekly appointments
     const start = startOfWeek(today, { weekStartsOn: 1 });
     const end = endOfWeek(today, { weekStartsOn: 1 });
@@ -51,8 +53,10 @@ export default function DashboardPage() {
     ).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     setWeeklyAppointments(filteredAppointments);
     setWeekDates(eachDayOfInterval({ start, end }));
-
+    
     // Calculate content completion for the month
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
     const contentThisMonth = content.filter(c => {
         const deadlineDate = new Date(c.deadline);
         return deadlineDate.getFullYear() === currentYear &&
@@ -62,26 +66,40 @@ export default function DashboardPage() {
     const totalMonthlyVideos = clients.reduce((sum, client) => sum + client.monthlyVideos, 0);
     setDoneContentCount(doneContentThisMonth);
     setTotalContentCount(totalMonthlyVideos);
+    
+    // Fetch team data and calculate performance
+    async function fetchTeamData() {
+        setIsLoadingTeam(true);
+        try {
+            const teamData = await getTeamMembers();
+            setTeam(teamData);
 
-    // Calculate team performance (hours per member)
-    const performanceData = team.map(member => {
-      const hoursThisMonth = timeEntries
-        .filter(entry => {
-          const entryDate = new Date(entry.date);
-          return entry.teamMember === member.name &&
-                 entryDate.getFullYear() === currentYear &&
-                 entryDate.getMonth() === currentMonth;
-        })
-        .reduce((total, entry) => total + entry.duration, 0);
-      
-      return {
-        id: member.id,
-        name: member.name,
-        role: member.role,
-        hoursThisMonth: hoursThisMonth,
-      };
-    });
-    setTeamPerformance(performanceData);
+            const performanceData = teamData.map(member => {
+                const hoursThisMonth = timeEntries
+                    .filter(entry => {
+                        const entryDate = new Date(entry.date);
+                        return entry.teamMember === member.name &&
+                               entryDate.getFullYear() === currentYear &&
+                               entryDate.getMonth() === currentMonth;
+                    })
+                    .reduce((total, entry) => total + entry.duration, 0);
+                
+                return {
+                    id: member.id,
+                    name: member.name,
+                    role: member.role,
+                    hoursThisMonth: hoursThisMonth,
+                };
+            });
+            setTeamPerformance(performanceData);
+        } catch (error) {
+            console.error("Failed to fetch team data", error);
+        } finally {
+            setIsLoadingTeam(false);
+        }
+    }
+
+    fetchTeamData();
   }, []);
 
   return (
@@ -179,7 +197,18 @@ export default function DashboardPage() {
               <CardDescription>Monthly stats for each team member.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 sm:grid-cols-2">
-              {teamPerformance.map((member) => (
+              {isLoadingTeam ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  </div>
+                ))
+              ) : teamPerformance.map((member) => (
                 <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
                    <Avatar className="h-12 w-12">
                     <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="person user" />
@@ -257,17 +286,52 @@ export default function DashboardPage() {
               </CardContent>
           </Card>
         </div>
-        <div className="grid grid-cols-1">
-          <Card>
+        <Card>
             <CardHeader>
-              <CardTitle>Notes</CardTitle>
-              <CardDescription>Your personal scratchpad for quick notes and reminders.</CardDescription>
+              <CardTitle>Hourly Rates</CardTitle>
+              <CardDescription>Current hourly rates for each team member.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Textarea placeholder="Type your notes here..." className="h-48 resize-none" />
+            <CardContent className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {isLoadingTeam ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+                      <Skeleton className="h-12 w-12 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                    </div>
+                  ))
+                ) : team.map((member) => (
+                <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+                   <Avatar className="h-12 w-12">
+                    <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="person user" />
+                    <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-semibold">{member.name}</p>
+                    <p className="text-sm text-muted-foreground">{member.role}</p>
+                    <div className="mt-2 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span>{(member.hourlyRate || 0).toLocaleString()} kr / hour</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
-          </Card>
-        </div>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Notes</CardTitle>
+            <CardDescription>Your personal scratchpad for quick notes and reminders.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea placeholder="Type your notes here..." className="h-48 resize-none" />
+          </CardContent>
+        </Card>
       </div>
     </AppShell>
   );
