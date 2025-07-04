@@ -145,7 +145,6 @@ export default function TeamPage() {
       email: formData.get("email") as string,
       phone: formData.get("phone") as string,
       role: formData.get("role") as TeamMember["role"],
-      hourlyRate: parseFloat(formData.get("hourlyRate") as string) || 0,
       assignedClients: (formData.get("assignedClients") as string).split(",").map(c => c.trim()).filter(Boolean),
     };
 
@@ -334,10 +333,6 @@ export default function TeamPage() {
                         <SelectItem value="Designer">Designer</SelectItem>
                       </SelectContent>
                     </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="hourlyRate" className="text-right">Hourly Rate</Label>
-                  <Input id="hourlyRate" name="hourlyRate" type="number" defaultValue={selectedMember.hourlyRate} className="col-span-3" required />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="assignedClients" className="text-right">Clients</Label>

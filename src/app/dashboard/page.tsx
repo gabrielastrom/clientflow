@@ -11,7 +11,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { financialData, appointments as allAppointments, timeEntries, content, clients } from "@/lib/data";
 import { type Appointment, type TeamMember } from "@/lib/types";
-import { Clock, DollarSign } from "lucide-react";
+import { Clock, DollarSign, Pencil } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,8 +19,14 @@ import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from 'da
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import RevenueByClientChart from "./revenue-by-client-chart";
-import { getTeamMembers } from "@/services/teamService";
+import { getTeamMembers, updateTeamMember } from "@/services/teamService";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+
 
 type TeamPerformanceData = {
   id: string;
@@ -38,6 +44,9 @@ export default function DashboardPage() {
   const [team, setTeam] = React.useState<TeamMember[]>([]);
   const [teamPerformance, setTeamPerformance] = React.useState<TeamPerformanceData[]>([]);
   const [isLoadingTeam, setIsLoadingTeam] = React.useState(true);
+  const [selectedMemberForRateEdit, setSelectedMemberForRateEdit] = React.useState<TeamMember | null>(null);
+  const [isRateEditDialogOpen, setIsRateEditDialogOpen] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     const today = new Date();
@@ -101,6 +110,33 @@ export default function DashboardPage() {
 
     fetchTeamData();
   }, []);
+
+  const handleRateEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedMemberForRateEdit) return;
+
+    const formData = new FormData(event.currentTarget);
+    const newRate = parseFloat(formData.get("hourlyRate") as string);
+
+    if (isNaN(newRate) || newRate < 0) {
+        toast({ title: "Invalid Input", description: "Please enter a valid, non-negative number for the hourly rate.", variant: "destructive" });
+        return;
+    }
+
+    const updatedMember: TeamMember = {
+        ...selectedMemberForRateEdit,
+        hourlyRate: newRate,
+    };
+
+    try {
+        await updateTeamMember(updatedMember);
+        setTeam(team.map(m => m.id === updatedMember.id ? updatedMember : m));
+        setIsRateEditDialogOpen(false);
+        toast({ title: "Success", description: "Hourly rate updated successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update hourly rate.", variant: "destructive" });
+    }
+  };
 
   return (
     <AppShell>
@@ -319,6 +355,17 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => {
+                        setSelectedMemberForRateEdit(member);
+                        setIsRateEditDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Edit Rate</span>
+                  </Button>
                 </div>
               ))}
             </CardContent>
@@ -333,6 +380,45 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+       <Dialog open={isRateEditDialogOpen} onOpenChange={setIsRateEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Hourly Rate</DialogTitle>
+            <DialogDescription>
+              Update the hourly rate for {selectedMemberForRateEdit?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedMemberForRateEdit && (
+            <form onSubmit={handleRateEditSubmit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="hourlyRate" className="text-right">
+                    Hourly Rate (kr)
+                  </Label>
+                  <Input
+                    id="hourlyRate"
+                    name="hourlyRate"
+                    type="number"
+                    step="0.01"
+                    defaultValue={selectedMemberForRateEdit.hourlyRate}
+                    className="col-span-3"
+                    required
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button type="submit">Save Changes</Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
