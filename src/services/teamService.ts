@@ -1,9 +1,6 @@
-'use server';
-
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import type { TeamMember } from '@/lib/types';
-import { revalidatePath } from 'next/cache';
 import type { User } from 'firebase/auth';
 
 export async function getTeamMembers(): Promise<TeamMember[]> {
@@ -37,10 +34,10 @@ export async function upsertTeamMemberFromUser(user: User): Promise<void> {
                 assignedClients: [],
             };
             await setDoc(teamMemberRef, newTeamMember);
-            revalidatePath('/team');
         }
     } catch (error) {
         console.error("Error upserting team member: ", error);
+        throw new Error("Failed to upsert team member.");
     }
 }
 
@@ -49,7 +46,6 @@ export async function updateTeamMember(teamMember: TeamMember): Promise<void> {
     try {
         const teamMemberRef = doc(db, "team", teamMember.id);
         await setDoc(teamMemberRef, teamMember, { merge: true });
-        revalidatePath('/team');
     } catch (error) {
         console.error("Error updating team member: ", error);
         throw new Error("Failed to update team member.");
@@ -59,7 +55,6 @@ export async function updateTeamMember(teamMember: TeamMember): Promise<void> {
 export async function deleteTeamMember(teamMemberId: string): Promise<void> {
     try {
         await deleteDoc(doc(db, "team", teamMemberId));
-        revalidatePath('/team');
     } catch (error) {
         console.error("Error deleting team member: ", error);
         throw new Error("Failed to delete team member.");
