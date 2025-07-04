@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import type { TeamMember } from '@/lib/types';
@@ -30,7 +31,7 @@ export async function upsertTeamMemberFromUser(user: User): Promise<void> {
                 name: user.displayName || user.email?.split('@')[0] || 'New User',
                 email: user.email || '',
                 phone: user.phoneNumber || '',
-                role: 'Designer', // Default role
+                role: 'Kreatör', // Default role
                 assignedClients: [],
                 hourlyRate: 150, // Default hourly rate
             };

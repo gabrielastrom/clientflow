@@ -1,3 +1,4 @@
+
 export type Client = {
   id: string;
   name: string;
@@ -34,7 +35,7 @@ export type TeamMember = {
     name: string;
     email: string;
     phone: string;
-    role: 'Manager' | 'Strategist' | 'Designer';
+    role: 'Ägare' | 'Kreatör' | 'Ekonomi';
     assignedClients: string[];
     hourlyRate: number;
 };

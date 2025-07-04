@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -64,7 +65,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 
-type SortableTeamKeys = keyof TeamMember;
+type SortableTeamKeys = keyof Omit<TeamMember, 'hourlyRate'>;
 
 export default function TeamPage() {
   const [team, setTeam] = React.useState<TeamMember[]>([]);
@@ -345,9 +346,9 @@ export default function TeamPage() {
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Manager">Manager</SelectItem>
-                        <SelectItem value="Strategist">Strategist</SelectItem>
-                        <SelectItem value="Designer">Designer</SelectItem>
+                        <SelectItem value="Ägare">Ägare</SelectItem>
+                        <SelectItem value="Kreatör">Kreatör</SelectItem>
+                        <SelectItem value="Ekonomi">Ekonomi</SelectItem>
                       </SelectContent>
                     </Select>
                 </div>
