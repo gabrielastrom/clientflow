@@ -19,7 +19,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { revenues as initialRevenues } from "@/lib/data";
 import { type Revenue, type Client } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
@@ -60,13 +59,14 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getClients } from "@/services/clientService";
+import { listenToRevenues, addRevenue, updateRevenue, deleteRevenue } from "@/services/revenueService";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SortableRevenueKeys = keyof Revenue;
 
 export default function FinancePage() {
-  const [revenues, setRevenues] = React.useState<Revenue[]>(initialRevenues);
+  const [revenues, setRevenues] = React.useState<Revenue[]>([]);
   const [clients, setClients] = React.useState<Client[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [selectedRevenue, setSelectedRevenue] = React.useState<Revenue | null>(null);
@@ -89,7 +89,6 @@ export default function FinancePage() {
 
   React.useEffect(() => {
     async function fetchClientsData() {
-      setIsLoading(true);
       try {
         const data = await getClients();
         setClients(data);
@@ -99,19 +98,28 @@ export default function FinancePage() {
           description: "Could not fetch clients.",
           variant: "destructive",
         });
-      } finally {
-        setIsLoading(false);
       }
     }
+    
     fetchClientsData();
+
+    const unsubscribeRevenues = listenToRevenues((revenuesData) => {
+        setRevenues(revenuesData);
+        setIsLoading(false);
+    });
+
+    return () => {
+        unsubscribeRevenues();
+    };
+
   }, [toast]);
 
   const sortedRevenues = React.useMemo(() => {
     let sortableItems = [...revenues];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
+        let aValue: string | number = a[sortConfig.key];
+        let bValue: string | number = b[sortConfig.key];
   
         if (sortConfig.key === 'revenue') {
           aValue = a.revenue;
@@ -151,22 +159,26 @@ export default function FinancePage() {
     return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
   };
 
-  const handleAddSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const newRevenue: Revenue = {
-      id: `${Date.now()}`,
+    const newRevenueData: Omit<Revenue, "id"> = {
       revenue: parseFloat(formData.get("revenue") as string),
       month: formData.get("month") as string,
       client: formData.get("client") as string,
       comment: formData.get("comment") as string,
     };
-    setRevenues((prev) => [newRevenue, ...prev]);
-    setIsAddOpen(false);
-    toast({ title: "Success", description: "Revenue added successfully." });
+
+    try {
+        await addRevenue(newRevenueData);
+        setIsAddOpen(false);
+        toast({ title: "Success", description: "Revenue added successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not add revenue.", variant: "destructive" });
+    }
   };
   
-  const handleEditSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedRevenue) return;
 
@@ -178,23 +190,28 @@ export default function FinancePage() {
       client: formData.get("client") as string,
       comment: formData.get("comment") as string,
     };
-
-    setRevenues(
-      revenues.map((r) => (r.id === updatedRevenue.id ? updatedRevenue : r))
-    );
-    setIsEditOpen(false);
-    toast({ title: "Success", description: "Revenue updated successfully." });
+    
+    try {
+        await updateRevenue(updatedRevenue);
+        setIsEditOpen(false);
+        toast({ title: "Success", description: "Revenue updated successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update revenue.", variant: "destructive" });
+    }
   };
 
-  const handleDeleteRevenue = () => {
+  const handleDeleteRevenue = async () => {
     if (!selectedRevenue) return;
-    setRevenues(revenues.filter((r) => r.id !== selectedRevenue.id));
-    setIsDeleteAlertOpen(false);
-    toast({
-      title: "Revenue Deleted",
-      description: `The revenue entry has been removed.`,
-      variant: "destructive",
-    });
+    try {
+        await deleteRevenue(selectedRevenue.id);
+        setIsDeleteAlertOpen(false);
+        toast({
+          title: "Revenue Deleted",
+          description: `The revenue entry has been removed.`,
+        });
+    } catch (error) {
+         toast({ title: "Error", description: "Could not delete revenue.", variant: "destructive" });
+    }
   };
 
   return (
@@ -264,6 +281,12 @@ export default function FinancePage() {
                       <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                     </TableRow>
                   ))
+                ) : sortedRevenues.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                            No revenue entries found.
+                        </TableCell>
+                    </TableRow>
                 ) : (
                   sortedRevenues.map((item) => (
                     <TableRow key={item.id}>
