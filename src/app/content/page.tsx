@@ -284,9 +284,7 @@ export default function ContentPage() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Content Pipeline</CardTitle>
-            </div>
+            <CardTitle>Content Pipeline</CardTitle>
             <div className="flex items-center space-x-2">
               <Switch 
                 id="current-month" 
@@ -642,9 +640,9 @@ export default function ContentPage() {
         <Dialog open={isTaskStatusModalOpen} onOpenChange={setIsTaskStatusModalOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Update Task Status</DialogTitle>
+              <DialogTitle>{selectedContent?.title}</DialogTitle>
               <DialogDescription>
-                Update the status for the task: "{selectedContent?.title}".
+                Update the status for this task.
               </DialogDescription>
             </DialogHeader>
             {selectedContent && (
