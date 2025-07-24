@@ -78,6 +78,7 @@ export default function ContentPage() {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isViewOpen, setIsViewOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [isTaskStatusModalOpen, setIsTaskStatusModalOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableContentKeys; direction: 'ascending' | 'descending' } | null>(null);
 
   const { toast } = useToast();
@@ -224,6 +225,36 @@ export default function ContentPage() {
     }
   };
 
+  const handleTaskClick = (task: Content) => {
+    setSelectedContent(task);
+    setIsTaskStatusModalOpen(true);
+  };
+  
+  const handleStatusUpdateSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedContent) return;
+
+    const formData = new FormData(event.currentTarget);
+    const newStatus = formData.get("status") as Content["status"];
+
+    const updatedTask = { ...selectedContent, status: newStatus };
+
+    try {
+        await updateContent(updatedTask);
+        setContentList(contentList.map(item => 
+          item.id === selectedContent.id ? updatedTask : item
+        ));
+        setIsTaskStatusModalOpen(false);
+        setSelectedContent(null);
+        toast({
+          title: "Status Updated",
+          description: `Task "${selectedContent.title}" has been updated to "${newStatus}".`,
+        });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update task status.", variant: "destructive" });
+    }
+  };
+
   return (
     <AppShell>
        <div className="flex justify-between items-center mb-6">
@@ -313,7 +344,7 @@ export default function ContentPage() {
                   </TableRow>
                 ) : (
                   sortedContent.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={item.id} className="cursor-pointer" onClick={() => handleTaskClick(item)}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{item.client}</TableCell>
                       <TableCell>
@@ -338,7 +369,7 @@ export default function ContentPage() {
                        <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Toggle menu</span>
                             </Button>
@@ -377,7 +408,7 @@ export default function ContentPage() {
                   </div>
               ) : (
                   sortedContent.map((item) => (
-                  <Card key={item.id}>
+                  <Card key={item.id} onClick={() => handleTaskClick(item)}>
                       <CardContent className="p-4 flex flex-col gap-3">
                       <div className="flex justify-between items-start">
                           <div>
@@ -386,7 +417,7 @@ export default function ContentPage() {
                           </div>
                           <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Toggle menu</span>
                               </Button>
@@ -585,6 +616,48 @@ export default function ContentPage() {
             </DialogFooter>
         </DialogContent>
       </Dialog>
+
+        {/* Update Task Status Dialog */}
+        <Dialog open={isTaskStatusModalOpen} onOpenChange={setIsTaskStatusModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Update Task Status</DialogTitle>
+              <DialogDescription>
+                Update the status for the task: "{selectedContent?.title}".
+              </DialogDescription>
+            </DialogHeader>
+            {selectedContent && (
+              <form onSubmit={handleStatusUpdateSubmit}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="status" className="text-right">
+                      Status
+                    </Label>
+                    <Select name="status" defaultValue={selectedContent.status}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Select a status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="To Do">To Do</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="In Review">In Review</SelectItem>
+                        <SelectItem value="Done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="secondary">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
     </AppShell>
   );
 }
