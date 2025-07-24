@@ -98,5 +98,3 @@ export async function uploadProfilePicture(file: File, userId: string): Promise<
         throw new Error("Failed to upload profile picture.");
     }
 }
-
-    
