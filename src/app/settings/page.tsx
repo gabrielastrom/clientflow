@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -10,10 +11,60 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "next-themes";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
+import { listenToTeamMembers, updateTeamMember } from "@/services/teamService";
+import type { TeamMember } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const [team, setTeam] = React.useState<TeamMember[]>([]);
+  const [currentUser, setCurrentUser] = React.useState<TeamMember | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [phone, setPhone] = React.useState("");
+
+  React.useEffect(() => {
+    if (user) {
+      const unsubscribe = listenToTeamMembers((teamData) => {
+        setTeam(teamData);
+        const userProfile = teamData.find(member => member.id === user.uid);
+        if (userProfile) {
+          setCurrentUser(userProfile);
+          setName(userProfile.name);
+          setEmail(userProfile.email);
+          setPhone(userProfile.phone);
+        }
+        setIsLoading(false);
+      });
+      return () => unsubscribe();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
+  
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) return;
+    
+    const updatedProfile: TeamMember = {
+        ...currentUser,
+        name,
+        email,
+        phone,
+    };
+
+    try {
+        await updateTeamMember(updatedProfile);
+        toast({ title: "Success", description: "Your profile has been updated." });
+    } catch (error) {
+        toast({ title: "Error", description: "Failed to update profile.", variant: "destructive" });
+    }
+  }
 
   return (
     <AppShell>
@@ -28,22 +79,44 @@ export default function SettingsPage() {
             <CardTitle>Profile</CardTitle>
             <CardDescription>Update your personal information.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" defaultValue="Alex Doe" className="md:col-span-2" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue="alex@clientflow.com" className="md:col-span-2" />
-            </div>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" type="tel" defaultValue="555-0201" className="md:col-span-2" />
-            </div>
-            <div className="flex justify-end">
-              <Button>Update Profile</Button>
-            </div>
+          <CardContent>
+             {isLoading ? (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <Label><Skeleton className="h-5 w-12" /></Label>
+                        <div className="md:col-span-2"><Skeleton className="h-10 w-full" /></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <Label><Skeleton className="h-5 w-12" /></Label>
+                        <div className="md:col-span-2"><Skeleton className="h-10 w-full" /></div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <Label><Skeleton className="h-5 w-12" /></Label>
+                        <div className="md:col-span-2"><Skeleton className="h-10 w-full" /></div>
+                    </div>
+                    <div className="flex justify-end">
+                       <Skeleton className="h-10 w-32" />
+                    </div>
+                </div>
+            ) : (
+                <form onSubmit={handleProfileUpdate} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                      <Label htmlFor="name">Name</Label>
+                      <Input id="name" value={name} onChange={e => setName(e.target.value)} className="md:col-span-2" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="md:col-span-2" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input id="phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="md:col-span-2" />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button type="submit">Update Profile</Button>
+                    </div>
+                </form>
+            )}
           </CardContent>
         </Card>
 
