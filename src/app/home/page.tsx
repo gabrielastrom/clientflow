@@ -294,10 +294,6 @@ export default function HomePage() {
         ));
         setIsTaskStatusModalOpen(false);
         setSelectedTask(null);
-        toast({
-          title: "Status Updated",
-          description: `Task "${selectedTask.title}" has been updated to "${newStatus}".`,
-        });
     } catch (error) {
         toast({ title: "Error", description: "Could not update task status.", variant: "destructive" });
     }
