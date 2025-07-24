@@ -52,14 +52,14 @@ import { listenToTeamMembers } from "@/services/teamService";
 
 const navItems = [
   { href: "/home", icon: Home, label: "Home" },
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/calendar", icon: Calendar, label: "Calendar" },
   { href: "/clients", icon: Users, label: "Clients" },
   { href: "/team", icon: Briefcase, label: "Team" },
-  { href: "/finance", icon: Banknote, label: "Finance" },
   { href: "/content", icon: Lightbulb, label: "Content" },
   { href: "/tracking", icon: Clock, label: "Time Tracking" },
   { href: "/knowledge-base", icon: BookOpen, label: "Knowledge Base" },
+  { href: "/finance", icon: Banknote, label: "Finance" },
+  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
 ];
 
 const publicRoutes = ["/login", "/signup"];
