@@ -75,7 +75,8 @@ export async function deleteTeamMember(teamMemberId: string): Promise<void> {
 }
 
 export async function uploadProfilePicture(file: File, userId: string): Promise<string> {
-    if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    const currentUser = auth.currentUser;
+    if (!currentUser || currentUser.uid !== userId) {
         throw new Error("Authentication error: User is not authorized to perform this action.");
     }
     
@@ -85,7 +86,7 @@ export async function uploadProfilePicture(file: File, userId: string): Promise<
         const downloadURL = await getDownloadURL(snapshot.ref);
 
         // Update Firebase Auth user profile
-        await updateProfile(auth.currentUser, { photoURL: downloadURL });
+        await updateProfile(currentUser, { photoURL: downloadURL });
         
         // Update Firestore team member document
         const teamMemberRef = doc(db, "team", userId);
@@ -97,3 +98,5 @@ export async function uploadProfilePicture(file: File, userId: string): Promise<
         throw new Error("Failed to upload profile picture.");
     }
 }
+
+    

@@ -24,6 +24,7 @@ export default function SettingsPage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [currentUser, setCurrentUser] = React.useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isUploading, setIsUploading] = React.useState(false);
 
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -74,13 +75,14 @@ export default function SettingsPage() {
         return;
     }
     const file = e.target.files[0];
+    setIsUploading(true);
     try {
-        await uploadProfilePicture(file, user.uid);
+        const downloadURL = await uploadProfilePicture(file, user.uid);
+        setCurrentUser(prevUser => prevUser ? { ...prevUser, photoURL: downloadURL } : null);
         toast({
             title: "Success",
             description: "Profile picture updated successfully."
         });
-        // The real-time listener will update the UI
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Could not upload the profile picture.";
         toast({
@@ -88,6 +90,8 @@ export default function SettingsPage() {
             description: errorMessage,
             variant: "destructive"
         });
+    } finally {
+        setIsUploading(false);
     }
   };
 
@@ -110,6 +114,14 @@ export default function SettingsPage() {
                <Skeleton className="h-24 w-24 rounded-full" />
             ) : (
                 <div className="relative">
+                    <Input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handlePictureUpload}
+                        className="hidden"
+                        accept="image/png, image/jpeg, image/gif"
+                        disabled={isUploading}
+                    />
                     <div
                         className="relative group w-24 h-24 cursor-pointer"
                         onClick={() => fileInputRef.current?.click()}
@@ -119,16 +131,10 @@ export default function SettingsPage() {
                             <AvatarFallback>{currentUser?.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                         </Avatar>
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                            <Camera className="h-8 w-8 text-white" />
+                           {!isUploading && <Camera className="h-8 w-8 text-white" />}
+                           {isUploading && <div className="h-6 w-6 border-4 border-background/50 border-t-background rounded-full animate-spin" />}
                         </div>
                     </div>
-                    <Input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handlePictureUpload}
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/gif"
-                    />
                 </div>
             )}
           </CardHeader>
@@ -231,3 +237,5 @@ export default function SettingsPage() {
     </AppShell>
   );
 }
+
+    
