@@ -532,71 +532,113 @@ export default function ClientsPage() {
                   return (
                     <TabsContent key={client.id} value={client.id} className="mt-4">
                       {clientContent.length > 0 ? (
-                         <div className="relative w-full overflow-auto">
-                           <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Title</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Platform</TableHead>
-                                <TableHead>Deadline</TableHead>
-                                <TableHead>Owner</TableHead>
-                                <TableHead>Link</TableHead>
-                                <TableHead><span className="sr-only">Actions</span></TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {clientContent.map((item) => (
-                                <TableRow key={item.id}>
-                                  <TableCell className="font-medium">{item.title}</TableCell>
-                                  <TableCell>
-                                    <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
-                                      {item.status}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell>{item.platform}</TableCell>
-                                  <TableCell>{item.deadline}</TableCell>
-                                  <TableCell>{item.owner}</TableCell>
-                                  <TableCell>
-                                    {item.link ? (
-                                      <Button asChild variant="ghost" size="icon">
-                                        <Link href={item.link} target="_blank">
-                                          <ExternalLink className="h-4 w-4" />
-                                        </Link>
-                                      </Button>
-                                    ) : (
-                                      <span className="text-muted-foreground">-</span>
-                                    )}
-                                  </TableCell>
-                                  <TableCell>
-                                    <DropdownMenu>
-                                      <DropdownMenuTrigger asChild>
-                                        <Button
-                                          aria-haspopup="true"
-                                          size="icon"
-                                          variant="ghost"
-                                        >
-                                          <MoreHorizontal className="h-4 w-4" />
-                                          <span className="sr-only">Toggle menu</span>
-                                        </Button>
-                                      </DropdownMenuTrigger>
-                                      <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem
-                                          onSelect={() => {
-                                            setSelectedContentItem(item);
-                                            setIsContentViewOpen(true);
-                                          }}
-                                        >
-                                          View Details
-                                        </DropdownMenuItem>
-                                      </DropdownMenuContent>
-                                    </DropdownMenu>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
+                         <div>
+                            {/* Desktop Table */}
+                            <div className="hidden md:block">
+                               <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Platform</TableHead>
+                                    <TableHead>Deadline</TableHead>
+                                    <TableHead>Owner</TableHead>
+                                    <TableHead>Link</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {clientContent.map((item) => (
+                                    <TableRow key={item.id}>
+                                      <TableCell className="font-medium">{item.title}</TableCell>
+                                      <TableCell>
+                                        <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
+                                          {item.status}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>{item.platform}</TableCell>
+                                      <TableCell>{item.deadline}</TableCell>
+                                      <TableCell>{item.owner}</TableCell>
+                                      <TableCell>
+                                        {item.link ? (
+                                          <Button asChild variant="ghost" size="icon">
+                                            <Link href={item.link} target="_blank">
+                                              <ExternalLink className="h-4 w-4" />
+                                            </Link>
+                                          </Button>
+                                        ) : (
+                                          <span className="text-muted-foreground">-</span>
+                                        )}
+                                      </TableCell>
+                                      <TableCell>
+                                        <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button
+                                              aria-haspopup="true"
+                                              size="icon"
+                                              variant="ghost"
+                                            >
+                                              <MoreHorizontal className="h-4 w-4" />
+                                              <span className="sr-only">Toggle menu</span>
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                            <DropdownMenuItem
+                                              onSelect={() => {
+                                                setSelectedContentItem(item);
+                                                setIsContentViewOpen(true);
+                                              }}
+                                            >
+                                              View Details
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                            {/* Mobile Card List */}
+                            <div className="md:hidden space-y-4">
+                               {clientContent.map((item) => (
+                                 <Card key={item.id}>
+                                   <CardContent className="p-4 flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                      <p className="font-semibold">{item.title}</p>
+                                      <DropdownMenu>
+                                          <DropdownMenuTrigger asChild>
+                                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                              <MoreHorizontal className="h-4 w-4" />
+                                              <span className="sr-only">Toggle menu</span>
+                                            </Button>
+                                          </DropdownMenuTrigger>
+                                          <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                            <DropdownMenuItem
+                                              onSelect={() => {
+                                                setSelectedContentItem(item);
+                                                setIsContentViewOpen(true);
+                                              }}
+                                            >
+                                              View Details
+                                            </DropdownMenuItem>
+                                          </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                      <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
+                                        {item.status}
+                                      </Badge>
+                                      <div className="text-muted-foreground">
+                                          {item.platform} - {item.deadline}
+                                      </div>
+                                    </div>
+                                   </CardContent>
+                                 </Card>
+                               ))}
+                            </div>
                          </div>
                       ) : (
                         <div className="flex items-center justify-center rounded-lg border-2 border-dashed p-8 text-center text-sm text-muted-foreground">
