@@ -52,17 +52,17 @@ export default function FinancialChart({ data }: FinancialChartProps) {
             formatter={(value: number) => [value.toLocaleString() + ' kr', 'Amount']}
           />
           <defs>
-            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+            <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
             </linearGradient>
           </defs>
           <Area
             type="monotone"
             dataKey="amount"
-            stroke="hsl(var(--primary))"
+            stroke="hsl(var(--destructive))"
             fillOpacity={1}
-            fill="url(#colorRevenue)"
+            fill="url(#colorExpense)"
             strokeWidth={2}
           />
         </AreaChart>

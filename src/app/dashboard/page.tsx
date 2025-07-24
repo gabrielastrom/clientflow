@@ -32,6 +32,8 @@ import { getContent as fetchContent } from "@/services/contentService";
 import { useAuth } from "@/contexts/auth-context";
 import { listenToRevenues } from "@/services/revenueService";
 import { listenToExpenses } from "@/services/expenseService";
+import ExpenseByCategoryChart from "./expense-by-category-chart";
+import ExpenseChart from "./expense-chart";
 
 
 type TeamPerformanceData = {
@@ -42,9 +44,15 @@ type TeamPerformanceData = {
   photoURL?: string;
 };
 
-type MonthlyRevenueData = {
+type MonthlyFinancialData = {
   month: string;
-  revenue: number;
+  amount: number;
+};
+
+type ExpenseByCategoryData = {
+  name: string;
+  expense: number;
+  fill: string;
 };
 
 type RevenueByClientData = {
@@ -74,8 +82,10 @@ export default function DashboardPage() {
   const [monthlyExpenses, setMonthlyExpenses] = React.useState(0);
   const [expenseChange, setExpenseChange] = React.useState(0);
   const [monthlyProfit, setMonthlyProfit] = React.useState(0);
-  const [revenueTrend, setRevenueTrend] = React.useState<MonthlyRevenueData[]>([]);
+  const [revenueTrend, setRevenueTrend] = React.useState<MonthlyFinancialData[]>([]);
+  const [expenseTrend, setExpenseTrend] = React.useState<MonthlyFinancialData[]>([]);
   const [revenueByClient, setRevenueByClient] = React.useState<RevenueByClientData[]>([]);
+  const [expenseByCategory, setExpenseByCategory] = React.useState<ExpenseByCategoryData[]>([]);
 
 
   React.useEffect(() => {
@@ -183,7 +193,7 @@ export default function DashboardPage() {
             const shortMonthName = format(date, 'MMM');
             return {
                 month: shortMonthName,
-                revenue: trendData[monthName] || 0
+                amount: trendData[monthName] || 0
             };
         })
         
@@ -216,7 +226,7 @@ export default function DashboardPage() {
     const unsubscribeExpenses = listenToExpenses((allExpenses) => {
         const now = new Date();
         const currentMonthName = format(now, 'MMMM yyyy');
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonth = subMonths(now, 1);
         const lastMonthName = format(lastMonth, 'MMMM yyyy');
 
         const currentMonthTotal = allExpenses
@@ -237,6 +247,53 @@ export default function DashboardPage() {
         } else {
             setExpenseChange(0);
         }
+
+        // Calculate expense trend for the last 7 months
+        const trendData: Record<string, number> = {};
+        for (let i = 6; i >= 0; i--) {
+            const date = subMonths(now, i);
+            const monthName = format(date, 'MMMM yyyy');
+            trendData[monthName] = 0;
+        }
+
+        allExpenses.forEach(e => {
+            if (trendData.hasOwnProperty(e.month)) {
+                trendData[e.month] += e.amount;
+            }
+        });
+        
+        const sortedTrend = Array.from({length: 7}, (_, i) => {
+            const date = subMonths(now, 6-i);
+            const monthName = format(date, 'MMMM yyyy');
+            const shortMonthName = format(date, 'MMM');
+            return {
+                month: shortMonthName,
+                amount: trendData[monthName] || 0
+            };
+        })
+        setExpenseTrend(sortedTrend);
+
+        // Calculate expense by category for the current month
+        const expenseByCategoryData: Record<string, number> = {};
+        allExpenses
+            .filter(r => r.month === currentMonthName)
+            .forEach(r => {
+                if (!expenseByCategoryData[r.category]) {
+                    expenseByCategoryData[r.category] = 0;
+                }
+                expenseByCategoryData[r.category] += r.amount;
+            });
+        
+        const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+        const categoryChartData = Object.entries(expenseByCategoryData)
+            .map(([categoryName, totalExpense], index) => ({
+                name: categoryName,
+                expense: totalExpense,
+                fill: chartColors[index % chartColors.length],
+            }))
+            .sort((a,b) => b.expense - a.expense);
+
+        setExpenseByCategory(categoryChartData);
     });
 
 
@@ -423,6 +480,26 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <RevenueByClientChart data={revenueByClient} />
+                </CardContent>
+            </Card>
+        </div>
+         <div className="grid gap-6 lg:grid-cols-5">
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle>Expenses Over Time</CardTitle>
+                    <CardDescription>Last 7 months spending.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ExpenseChart data={expenseTrend} />
+                </CardContent>
+            </Card>
+            <Card className="lg:col-span-2">
+                <CardHeader>
+                    <CardTitle>Expenses by Category</CardTitle>
+                    <CardDescription>This month's spending distribution.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ExpenseByCategoryChart data={expenseByCategory} />
                 </CardContent>
             </Card>
         </div>
@@ -628,3 +705,5 @@ export default function DashboardPage() {
     </AppShell>
   );
 }
+
+    
