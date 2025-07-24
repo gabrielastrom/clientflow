@@ -39,6 +39,7 @@ export type TeamMember = {
     role: 'Ägare' | 'Kreatör' | 'Ekonomi';
     assignedClients: string[];
     hourlyRate: number;
+    photoURL?: string;
 };
 
 export type Revenue = {
