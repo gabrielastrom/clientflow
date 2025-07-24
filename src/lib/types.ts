@@ -1,4 +1,5 @@
 
+
 export type Client = {
   id: string;
   name: string;
@@ -58,4 +59,13 @@ export type Content = {
   owner: string;
   link?: string;
   description?: string;
+};
+
+export type KnowledgeBaseArticle = {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  summary: string;
+  content: string;
 };
