@@ -246,121 +246,179 @@ export default function ContentPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('title')}>
-                    Title
-                    {getSortIcon('title')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('client')}>
-                    Client
-                    {getSortIcon('client')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('status')}>
-                    Status
-                    {getSortIcon('status')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('platform')}>
-                    Platform
-                    {getSortIcon('platform')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('deadline')}>
-                    Deadline
-                    {getSortIcon('deadline')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('owner')}>
-                    Owner
-                    {getSortIcon('owner')}
-                  </Button>
-                </TableHead>
-                <TableHead>Link</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                  </TableRow>
-                ))
-              ) : sortedContent.length === 0 ? (
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
-                        No content found. Add content to get started.
-                    </TableCell>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('title')}>
+                      Title
+                      {getSortIcon('title')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('client')}>
+                      Client
+                      {getSortIcon('client')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('status')}>
+                      Status
+                      {getSortIcon('status')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('platform')}>
+                      Platform
+                      {getSortIcon('platform')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('deadline')}>
+                      Deadline
+                      {getSortIcon('deadline')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('owner')}>
+                      Owner
+                      {getSortIcon('owner')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Link</TableHead>
+                  <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
-              ) : (
-                sortedContent.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.title}</TableCell>
-                    <TableCell>{item.client}</TableCell>
-                    <TableCell>
-                      <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
-                        {item.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{item.platform}</TableCell>
-                    <TableCell>{item.deadline}</TableCell>
-                    <TableCell>{item.owner}</TableCell>
-                    <TableCell>
-                      {item.link ? (
-                        <Button asChild variant="ghost" size="icon">
-                          <Link href={item.link} target="_blank">
-                            <ExternalLink className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                           <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsViewOpen(true); }}>
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsEditOpen(true); }}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedContent(item); setIsDeleteAlertOpen(true); }}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : sortedContent.length === 0 ? (
+                  <TableRow>
+                      <TableCell colSpan={8} className="h-24 text-center">
+                          No content found. Add content to get started.
+                      </TableCell>
                   </TableRow>
-                ))
+                ) : (
+                  sortedContent.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">{item.title}</TableCell>
+                      <TableCell>{item.client}</TableCell>
+                      <TableCell>
+                        <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
+                          {item.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{item.platform}</TableCell>
+                      <TableCell>{item.deadline}</TableCell>
+                      <TableCell>{item.owner}</TableCell>
+                      <TableCell>
+                        {item.link ? (
+                          <Button asChild variant="ghost" size="icon">
+                            <Link href={item.link} target="_blank">
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                       <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                             <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsViewOpen(true); }}>
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsEditOpen(true); }}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedContent(item); setIsDeleteAlertOpen(true); }}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {/* Mobile Card List */}
+          <div className="md:hidden">
+            <div className="space-y-4">
+              {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                      <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+                  ))
+              ) : sortedContent.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                      <p>No content found.</p>
+                  </div>
+              ) : (
+                  sortedContent.map((item) => (
+                  <Card key={item.id}>
+                      <CardContent className="p-4 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                          <div>
+                              <p className="font-semibold">{item.title}</p>
+                              <p className="text-sm text-muted-foreground">{item.client}</p>
+                          </div>
+                          <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsViewOpen(true); }}>View Details</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => { setSelectedContent(item); setIsEditOpen(true); }}>Edit</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              onSelect={() => { setSelectedContent(item); setIsDeleteAlertOpen(true); }}
+                              >
+                              Delete
+                              </DropdownMenuItem>
+                          </DropdownMenuContent>
+                          </DropdownMenu>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                          <Badge variant={'outline'} className={cn(getStatusBadgeClassName(item.status))}>
+                            {item.status}
+                          </Badge>
+                          <div className="text-muted-foreground">
+                              {item.platform}
+                          </div>
+                      </div>
+                      </CardContent>
+                  </Card>
+                  ))
               )}
-            </TableBody>
-          </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
       
