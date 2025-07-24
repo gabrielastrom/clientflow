@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type Revenue, type Client, type Expense } from "@/lib/types";
+import { type Revenue, type Client, type Expense, type TeamMember, type TimeEntry } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -63,6 +63,8 @@ import { listenToRevenues, addRevenue, updateRevenue, deleteRevenue } from "@/se
 import { listenToExpenses, addExpense, updateExpense, deleteExpense } from "@/services/expenseService";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { listenToTeamMembers } from "@/services/teamService";
+import { getTimeEntries } from "@/services/timeTrackingService";
 
 type SortableRevenueKeys = keyof Revenue;
 type SortableExpenseKeys = keyof Expense;
@@ -71,6 +73,8 @@ export default function FinancePage() {
   const [revenues, setRevenues] = React.useState<Revenue[]>([]);
   const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [clients, setClients] = React.useState<Client[]>([]);
+  const [teamMembers, setTeamMembers] = React.useState<TeamMember[]>([]);
+  const [timeEntries, setTimeEntries] = React.useState<TimeEntry[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   
   const [selectedRevenue, setSelectedRevenue] = React.useState<Revenue | null>(null);
@@ -86,6 +90,9 @@ export default function FinancePage() {
   const [sortConfigRevenue, setSortConfigRevenue] = React.useState<{ key: SortableRevenueKeys; direction: 'ascending' | 'descending' } | null>(null);
   const [sortConfigExpense, setSortConfigExpense] = React.useState<{ key: SortableExpenseKeys; direction: 'ascending' | 'descending' } | null>(null);
 
+  const [expenseFormData, setExpenseFormData] = React.useState<{category: string, member: string, month: string}>({category: '', member: '', month: format(new Date(), "MMMM yyyy")});
+  const [calculatedSalary, setCalculatedSalary] = React.useState<number | null>(null);
+  
   const { toast } = useToast();
 
   const monthOptions = React.useMemo(() => {
@@ -103,10 +110,16 @@ export default function FinancePage() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const clientData = await getClients();
-        if (active) setClients(clientData);
+        const [clientData, timeEntriesData] = await Promise.all([
+          getClients(),
+          getTimeEntries()
+        ]);
+        if (active) {
+            setClients(clientData);
+            setTimeEntries(timeEntriesData);
+        }
       } catch (error) {
-        toast({ title: "Error", description: "Could not fetch clients.", variant: "destructive" });
+        toast({ title: "Error", description: "Could not fetch initial data.", variant: "destructive" });
       }
     }
     
@@ -117,8 +130,12 @@ export default function FinancePage() {
     });
 
     const unsubscribeExpenses = listenToExpenses((expensesData) => {
+        if (active) setExpenses(expensesData);
+    });
+
+    const unsubscribeTeam = listenToTeamMembers((teamData) => {
         if (active) {
-            setExpenses(expensesData);
+            setTeamMembers(teamData);
             setIsLoading(false);
         }
     });
@@ -127,9 +144,41 @@ export default function FinancePage() {
         active = false;
         unsubscribeRevenues();
         unsubscribeExpenses();
+        unsubscribeTeam();
     };
 
   }, [toast]);
+
+  React.useEffect(() => {
+    if (expenseFormData.category !== 'Salaries' || !expenseFormData.member || !expenseFormData.month) {
+      setCalculatedSalary(null);
+      return;
+    }
+
+    const member = teamMembers.find(m => m.id === expenseFormData.member);
+    if (!member) {
+      setCalculatedSalary(null);
+      return;
+    }
+    
+    const [monthStr, yearStr] = expenseFormData.month.split(' ');
+    const monthIndex = new Date(Date.parse(monthStr +" 1, 2012")).getMonth();
+    const year = parseInt(yearStr, 10);
+
+    const hoursThisMonth = timeEntries
+      .filter(entry => {
+        const entryDate = new Date(entry.date);
+        return entry.teamMember.toLowerCase() === member.name.toLowerCase() &&
+               entryDate.getFullYear() === year &&
+               entryDate.getMonth() === monthIndex;
+      })
+      .reduce((total, entry) => total + entry.duration, 0);
+    
+    const salary = hoursThisMonth * (member.hourlyRate || 0);
+    setCalculatedSalary(salary);
+
+  }, [expenseFormData, timeEntries, teamMembers]);
+
 
   const sortedRevenues = React.useMemo(() => {
     let sortableItems = [...revenues];
@@ -270,11 +319,23 @@ export default function FinancePage() {
   const handleAddExpenseSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+
+    let amount = parseFloat(formData.get("amount") as string);
+    if (expenseFormData.category === 'Salaries' && calculatedSalary !== null) {
+      amount = calculatedSalary;
+    }
+    
+    let comment = formData.get("comment") as string;
+    if(expenseFormData.category === 'Salaries') {
+        const member = teamMembers.find(m => m.id === expenseFormData.member);
+        comment = `Salary for ${member?.name} - ${expenseFormData.month}`;
+    }
+
     const newExpenseData: Omit<Expense, "id"> = {
-      amount: parseFloat(formData.get("amount") as string),
-      month: formData.get("month") as string,
-      category: formData.get("category") as string,
-      comment: formData.get("comment") as string,
+      amount,
+      month: expenseFormData.month,
+      category: expenseFormData.category,
+      comment,
     };
 
     try {
@@ -319,23 +380,31 @@ export default function FinancePage() {
     }
   };
 
-  const expenseCategories = ["Software", "Marketing", "Office Supplies", "Salaries", "Other"];
+  const expenseCategories = ["Salaries", "Software", "Marketing", "Office Supplies", "Other"];
+
+  const openAddExpenseDialog = () => {
+    setExpenseFormData({category: '', member: '', month: format(new Date(), "MMMM yyyy")});
+    setCalculatedSalary(null);
+    setIsAddExpenseOpen(true);
+  }
+  
+  const openEditExpenseDialog = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsEditExpenseOpen(true);
+  }
 
   return (
     <AppShell>
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Finance</h1>
-          <p className="text-muted-foreground">
-            Track your agency's revenue and financial performance.
-          </p>
         </div>
          <div className="flex gap-2">
             <Button onClick={() => setIsAddRevenueOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Revenue
             </Button>
-            <Button onClick={() => setIsAddExpenseOpen(true)} variant="secondary">
+            <Button onClick={openAddExpenseDialog} variant="secondary">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Add Expense
             </Button>
@@ -568,7 +637,7 @@ export default function FinancePage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem onSelect={() => { setSelectedExpense(item); setIsEditExpenseOpen(true); }}>
+                                <DropdownMenuItem onSelect={() => openEditExpenseDialog(item)}>
                                 Edit
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -614,7 +683,7 @@ export default function FinancePage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem onSelect={() => { setSelectedExpense(item); setIsEditExpenseOpen(true); }}>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => openEditExpenseDialog(item)}>Edit</DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedExpense(item); setIsDeleteExpenseAlertOpen(true); }}>
                                             Delete
@@ -708,7 +777,10 @@ export default function FinancePage() {
       </AlertDialog>
 
        {/* Add/Edit Expense Dialog */}
-      <Dialog open={isAddExpenseOpen || isEditExpenseOpen} onOpenChange={isAddExpenseOpen ? setIsAddExpenseOpen : setIsEditExpenseOpen}>
+      <Dialog open={isAddExpenseOpen || isEditExpenseOpen} onOpenChange={(open) => {
+          if (isAddExpenseOpen) setIsAddExpenseOpen(open);
+          if (isEditExpenseOpen) setIsEditExpenseOpen(open);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{isAddExpenseOpen ? "Add New Expense" : "Edit Expense"}</DialogTitle>
@@ -718,13 +790,11 @@ export default function FinancePage() {
           </DialogHeader>
           <form onSubmit={isAddExpenseOpen ? handleAddExpenseSubmit : handleEditExpenseSubmit}>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="expense-amount" className="text-right">Amount</Label>
-                <Input id="expense-amount" name="amount" type="number" step="0.01" defaultValue={selectedExpense?.amount} className="col-span-3" required />
-              </div>
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-category" className="text-right">Category</Label>
-                <Select name="category" defaultValue={selectedExpense?.category}>
+                <Select name="category" 
+                    defaultValue={isEditExpenseOpen ? selectedExpense?.category : expenseFormData.category} 
+                    onValueChange={(value) => setExpenseFormData(prev => ({...prev, category: value, member: ''}))}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
@@ -737,7 +807,9 @@ export default function FinancePage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-month" className="text-right">Month</Label>
-                <Select name="month" defaultValue={selectedExpense?.month || format(new Date(), "MMMM yyyy")}>
+                <Select name="month"
+                    defaultValue={isEditExpenseOpen ? selectedExpense?.month : expenseFormData.month}
+                    onValueChange={(value) => setExpenseFormData(prev => ({...prev, month: value}))}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select a month" />
                     </SelectTrigger>
@@ -748,9 +820,38 @@ export default function FinancePage() {
                     </SelectContent>
                   </Select>
               </div>
+              
+              {expenseFormData.category === 'Salaries' && isAddExpenseOpen && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="expense-member" className="text-right">Team Member</Label>
+                    <Select name="member" value={expenseFormData.member} onValueChange={(value) => setExpenseFormData(prev => ({...prev, member: value}))}>
+                        <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Select a team member" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {teamMembers.map(member => (
+                                <SelectItem key={member.id} value={member.id}>{member.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+              )}
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-amount" className="text-right">Amount</Label>
+                <Input id="expense-amount" name="amount" type="number" step="0.01" 
+                    key={calculatedSalary} // Re-renders the input when salary is calculated
+                    defaultValue={isEditExpenseOpen ? selectedExpense?.amount : (calculatedSalary ?? '')} 
+                    readOnly={isAddExpenseOpen && expenseFormData.category === 'Salaries'}
+                    className="col-span-3" required />
+              </div>
+
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-comment" className="text-right">Comment</Label>
-                <Input id="expense-comment" name="comment" defaultValue={selectedExpense?.comment} className="col-span-3" />
+                <Input id="expense-comment" name="comment"
+                    key={expenseFormData.member} // Re-renders the input when member changes
+                    defaultValue={isEditExpenseOpen ? selectedExpense?.comment : ''}
+                    className="col-span-3" />
               </div>
             </div>
             <DialogFooter>
