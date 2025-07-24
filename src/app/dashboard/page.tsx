@@ -284,12 +284,12 @@ export default function DashboardPage() {
                 expenseByCategoryData[r.category] += r.amount;
             });
         
-        const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+        const expenseChartColors = ["hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--chart-3))", "hsl(var(--chart-2))", "hsl(var(--chart-1))"];
         const categoryChartData = Object.entries(expenseByCategoryData)
             .map(([categoryName, totalExpense], index) => ({
                 name: categoryName,
                 expense: totalExpense,
-                fill: chartColors[index % chartColors.length],
+                fill: expenseChartColors[index % expenseChartColors.length],
             }))
             .sort((a,b) => b.expense - a.expense);
 
