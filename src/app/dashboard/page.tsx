@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
 import { financialData, appointments as allAppointments, content, clients } from "@/lib/data";
-import { type Appointment, type TeamMember, type TimeEntry } from "@/lib/types";
+import { type Appointment, type TeamMember, type TimeEntry, type Content } from "@/lib/types";
 import { Clock, DollarSign, Pencil } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from 'date-fns';
+import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import RevenueByClientChart from "./revenue-by-client-chart";
@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { getContent as fetchContent } from "@/services/contentService";
 
 
 type TeamPerformanceData = {
@@ -68,17 +69,33 @@ export default function DashboardPage() {
     setWeekDates(eachDayOfInterval({ start, end }));
     
     // Calculate content completion for the month
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    const contentThisMonth = content.filter(c => {
-        const deadlineDate = new Date(c.deadline);
-        return deadlineDate.getFullYear() === currentYear &&
-               deadlineDate.getMonth() === currentMonth;
-    });
-    const doneContentThisMonth = contentThisMonth.filter(c => c.status === 'Done').length;
-    const totalMonthlyVideos = clients.reduce((sum, client) => sum + client.monthlyVideos, 0);
-    setDoneContentCount(doneContentThisMonth);
-    setTotalContentCount(totalMonthlyVideos);
+    async function calculateContentCompletion() {
+        try {
+            const allContent: Content[] = await fetchContent();
+            const today = new Date();
+            const startOfThisMonth = startOfMonth(today);
+            const endOfThisMonth = endOfMonth(today);
+
+            const contentThisMonth = allContent.filter(c => {
+                const deadlineDate = new Date(c.deadline);
+                return isWithinInterval(deadlineDate, { start: startOfThisMonth, end: endOfThisMonth });
+            });
+            
+            const doneThisMonth = contentThisMonth.filter(c => c.status === 'Done').length;
+            
+            setDoneContentCount(doneThisMonth);
+            setTotalContentCount(contentThisMonth.length);
+
+        } catch (error) {
+             toast({
+                title: "Error",
+                description: "Could not calculate content completion.",
+                variant: "destructive"
+            });
+        }
+    }
+    calculateContentCompletion();
+
 
     // Fetch time entries
      getTimeEntries().then(setTimeEntries).catch(error => {
@@ -439,3 +456,5 @@ export default function DashboardPage() {
     </AppShell>
   );
 }
+
+    
