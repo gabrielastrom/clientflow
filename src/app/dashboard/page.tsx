@@ -10,13 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
-import { financialData, appointments as allAppointments, clients } from "@/lib/data";
+import { appointments as allAppointments, clients } from "@/lib/data";
 import { type Appointment, type TeamMember, type TimeEntry, type Content, type Revenue, type Expense } from "@/lib/types";
 import { Clock, DollarSign, Pencil } from "lucide-react";
-import FinancialChart from "./financial-chart";
+import RevenueChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
-import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format, startOfMonth, endOfMonth, isWithinInterval, subMonths } from 'date-fns';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import RevenueByClientChart from "./revenue-by-client-chart";
@@ -42,6 +42,11 @@ type TeamPerformanceData = {
   photoURL?: string;
 };
 
+type MonthlyRevenueData = {
+  month: string;
+  revenue: number;
+};
+
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -63,7 +68,7 @@ export default function DashboardPage() {
   const [monthlyExpenses, setMonthlyExpenses] = React.useState(0);
   const [expenseChange, setExpenseChange] = React.useState(0);
   const [monthlyProfit, setMonthlyProfit] = React.useState(0);
-  const [profitChange, setProfitChange] = React.useState(0);
+  const [revenueTrend, setRevenueTrend] = React.useState<MonthlyRevenueData[]>([]);
 
 
   React.useEffect(() => {
@@ -150,6 +155,38 @@ export default function DashboardPage() {
         } else {
             setRevenueChange(0);
         }
+
+        // Calculate revenue trend for the last 7 months
+        const trendData: Record<string, number> = {};
+        for (let i = 6; i >= 0; i--) {
+            const date = subMonths(now, i);
+            const monthName = format(date, 'MMMM yyyy');
+            const shortMonthName = format(date, 'MMM');
+            trendData[monthName] = 0;
+        }
+
+        allRevenues.forEach(r => {
+            if (trendData.hasOwnProperty(r.month)) {
+                trendData[r.month] += r.revenue;
+            }
+        });
+
+        const chartData = Object.entries(trendData).map(([month, revenue]) => ({
+            month: format(new Date(month), 'MMM'),
+            revenue: revenue,
+        })).sort((a,b) => new Date(subMonths(now, 6)).getMonth() + (Object.keys(trendData).indexOf(a.month)) - (new Date(subMonths(now, 6)).getMonth() + (Object.keys(trendData).indexOf(b.month))));
+        
+        const sortedTrend = Array.from({length: 7}, (_, i) => {
+            const date = subMonths(now, 6-i);
+            const monthName = format(date, 'MMMM yyyy');
+            const shortMonthName = format(date, 'MMM');
+            return {
+                month: shortMonthName,
+                revenue: trendData[monthName] || 0
+            };
+        })
+        
+        setRevenueTrend(sortedTrend);
     });
     
     const unsubscribeExpenses = listenToExpenses((allExpenses) => {
@@ -348,11 +385,11 @@ export default function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-5">
             <Card className="lg:col-span-3">
                 <CardHeader>
-                    <CardTitle>Profit Over Time</CardTitle>
+                    <CardTitle>Revenue Over Time</CardTitle>
                     <CardDescription>Last 7 months performance.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <FinancialChart />
+                    <RevenueChart data={revenueTrend} />
                 </CardContent>
             </Card>
             <Card className="lg:col-span-2">
@@ -567,5 +604,3 @@ export default function DashboardPage() {
     </AppShell>
   );
 }
-
-    

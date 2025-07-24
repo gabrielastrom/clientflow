@@ -1,26 +1,26 @@
+
 "use client";
 
-import { financialData } from "@/lib/data";
 import {
-  Bar,
-  BarChart,
   ResponsiveContainer,
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   AreaChart,
   Area,
   CartesianGrid,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function FinancialChart() {
+type RevenueChartProps = {
+  data: { month: string; revenue: number }[];
+};
+
+export default function RevenueChart({ data }: RevenueChartProps) {
   return (
     <div className="h-[350px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
-          data={financialData.profitTrend}
+          data={data}
           margin={{
             top: 5,
             right: 20,
@@ -51,17 +51,17 @@ export default function FinancialChart() {
             }}
           />
           <defs>
-            <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
               <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
             </linearGradient>
           </defs>
           <Area
             type="monotone"
-            dataKey="profit"
+            dataKey="revenue"
             stroke="hsl(var(--primary))"
             fillOpacity={1}
-            fill="url(#colorProfit)"
+            fill="url(#colorRevenue)"
             strokeWidth={2}
           />
         </AreaChart>
