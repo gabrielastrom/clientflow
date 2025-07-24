@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -352,106 +353,162 @@ export default function TrackingPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('date')}>
-                      Date
-                      {getSortIcon('date')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('teamMember')}>
-                      Team Member
-                      {getSortIcon('teamMember')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('client')}>
-                      Client
-                      {getSortIcon('client')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('task')}>
-                      Task
-                      {getSortIcon('task')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="text-right">
-                    <Button variant="ghost" onClick={() => requestSort('duration')} className="justify-end w-full">
-                      Hours
-                      {getSortIcon('duration')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
-                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : sortedTimeEntries.length === 0 ? (
-                    <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
-                            No time entries found.
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('date')}>
+                        Date
+                        {getSortIcon('date')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('teamMember')}>
+                        Team Member
+                        {getSortIcon('teamMember')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('client')}>
+                        Client
+                        {getSortIcon('client')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <Button variant="ghost" onClick={() => requestSort('task')}>
+                        Task
+                        {getSortIcon('task')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="text-right">
+                      <Button variant="ghost" onClick={() => requestSort('duration')} className="justify-end w-full">
+                        Hours
+                        {getSortIcon('duration')}
+                      </Button>
+                    </TableHead>
+                    <TableHead>
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : sortedTimeEntries.length === 0 ? (
+                      <TableRow>
+                          <TableCell colSpan={6} className="h-24 text-center">
+                              No time entries found.
+                          </TableCell>
+                      </TableRow>
+                  ) : (
+                    sortedTimeEntries.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell>{entry.date}</TableCell>
+                        <TableCell className="font-medium">{entry.teamMember}</TableCell>
+                        <TableCell>{entry.client}</TableCell>
+                        <TableCell>{entry.task}</TableCell>
+                        <TableCell className="text-right">{entry.duration.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onSelect={() => {
+                                  setSelectedEntry(entry);
+                                  setIsEditOpen(true);
+                                }}
+                              >
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                onSelect={() => {
+                                  setSelectedEntry(entry);
+                                  setIsDeleteAlertOpen(true);
+                                }}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
-                    </TableRow>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            {/* Mobile Card List */}
+            <div className="md:hidden">
+              <div className="space-y-4">
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <Card key={i}><CardContent className="p-4"><Skeleton className="h-20 w-full" /></CardContent></Card>
+                    ))
+                ) : sortedTimeEntries.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                        <p>No time entries found.</p>
+                    </div>
                 ) : (
-                  sortedTimeEntries.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell>{entry.date}</TableCell>
-                      <TableCell className="font-medium">{entry.teamMember}</TableCell>
-                      <TableCell>{entry.client}</TableCell>
-                      <TableCell>{entry.task}</TableCell>
-                      <TableCell className="text-right">{entry.duration.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onSelect={() => {
-                                setSelectedEntry(entry);
-                                setIsEditOpen(true);
-                              }}
-                            >
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                              onSelect={() => {
-                                setSelectedEntry(entry);
-                                setIsDeleteAlertOpen(true);
-                              }}
-                            >
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                    sortedTimeEntries.map((entry) => (
+                    <Card key={entry.id}>
+                        <CardContent className="p-4 flex flex-col gap-2">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-semibold">{entry.task}</p>
+                                <p className="text-sm text-muted-foreground">{entry.client}</p>
+                            </div>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onSelect={() => { setSelectedEntry(entry); setIsEditOpen(true); }}>Edit</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                onSelect={() => { setSelectedEntry(entry); setIsDeleteAlertOpen(true); }}
+                                >
+                                Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-muted-foreground">
+                            <span>{entry.teamMember}</span>
+                            <span>{entry.date}</span>
+                        </div>
+                        <div className="flex justify-end items-center font-bold text-lg">
+                            <span>{entry.duration.toFixed(2)}h</span>
+                        </div>
+                        </CardContent>
+                    </Card>
+                    ))
                 )}
-              </TableBody>
-            </Table>
+              </div>
+            </div>
           </CardContent>
         </Card>
         
