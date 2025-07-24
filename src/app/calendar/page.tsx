@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -37,7 +38,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type Appointment, type Client } from "@/lib/types";
+import { type Appointment, type Client, type TeamMember } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -45,9 +46,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, format } from "date-fns";
 import { getClients } from "@/services/clientService";
+import { useAuth } from "@/contexts/auth-context";
+import { listenToTeamMembers, updateTeamMember } from "@/services/teamService";
 
 
 export default function CalendarPage() {
+  const { user } = useAuth();
   const [appointments, setAppointments] = React.useState<Appointment[]>(allAppointments);
   const [clients, setClients] = React.useState<Client[]>([]);
   const [date, setDate] = React.useState<Date | undefined>(undefined);
@@ -58,6 +62,9 @@ export default function CalendarPage() {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isViewOpen, setIsViewOpen] = React.useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
+  const [currentUserData, setCurrentUserData] = React.useState<TeamMember | null>(null);
+  const [team, setTeam] = React.useState<TeamMember[]>([]);
+  const [notes, setNotes] = React.useState("");
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -77,7 +84,46 @@ export default function CalendarPage() {
         }
     }
     fetchClientsData();
+
+     const unsubscribeTeam = listenToTeamMembers((teamData) => {
+        setTeam(teamData);
+    });
+
+    return () => {
+        unsubscribeTeam();
+    };
   }, [toast]);
+  
+  React.useEffect(() => {
+    if (user && team.length > 0) {
+      const userData = team.find(m => m.id === user.uid) || null;
+      setCurrentUserData(userData);
+      if (userData) {
+          setNotes(userData.notes || "");
+      }
+    }
+  }, [user, team]);
+
+  // Debounced effect for saving notes
+  React.useEffect(() => {
+    if (!currentUserData || notes === (currentUserData.notes || '')) {
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      try {
+        await updateTeamMember({ ...currentUserData, notes });
+      } catch (error) {
+        console.error("Failed to save notes:", error);
+        toast({ title: "Error", description: "Failed to save your notes.", variant: "destructive" });
+      }
+    }, 1000);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [notes, currentUserData, toast]);
+
 
   React.useEffect(() => {
     if (date) {
@@ -300,7 +346,7 @@ export default function CalendarPage() {
             </CardContent>
           </Card>
         </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardContent className="p-0">
                     <Calendar
@@ -320,6 +366,21 @@ export default function CalendarPage() {
                         }}
                     />
                 </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Notes</CardTitle>
+                <CardDescription>Your personal scratchpad for quick notes and reminders.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                 <Textarea 
+                    placeholder="Type your notes here..." 
+                    className="h-48 resize-none"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    disabled={!currentUserData} 
+                />
+              </CardContent>
             </Card>
         </div>
       </div>
