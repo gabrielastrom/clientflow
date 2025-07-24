@@ -40,6 +40,7 @@ export type TeamMember = {
     assignedClients: string[];
     hourlyRate: number;
     photoURL?: string;
+    notes?: string;
 };
 
 export type Revenue = {
