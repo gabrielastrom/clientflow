@@ -202,40 +202,7 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Manage how you receive notifications.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div>
-                <Label htmlFor="email-notifications" className="cursor-pointer">Email Notifications</Label>
-                <p className="text-sm text-muted-foreground">Receive notifications via email for important updates.</p>
-              </div>
-              <Switch id="email-notifications" defaultChecked />
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-               <div>
-                <Label htmlFor="push-notifications" className="cursor-pointer">Push Notifications</Label>
-                <p className="text-sm text-muted-foreground">Get push notifications on your devices.</p>
-              </div>
-              <Switch id="push-notifications" />
-            </div>
-             <div className="flex items-center justify-between rounded-lg border p-4">
-               <div>
-                <Label htmlFor="task-updates" className="cursor-pointer">Task Updates</Label>
-                <p className="text-sm text-muted-foreground">Notify me when a task status changes.</p>
-              </div>
-              <Switch id="task-updates" defaultChecked />
-            </div>
-          </CardContent>
-        </Card>
-
       </div>
     </AppShell>
   );
 }
-
-    
