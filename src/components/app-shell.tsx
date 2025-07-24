@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -28,6 +29,7 @@ import {
   Moon,
   Sun,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -55,6 +57,7 @@ const navItems = [
   { href: "/finance", icon: Banknote, label: "Finance" },
   { href: "/content", icon: Lightbulb, label: "Content" },
   { href: "/tracking", icon: Clock, label: "Time Tracking" },
+  { href: "/knowledge-base", icon: BookOpen, label: "Knowledge Base" },
 ];
 
 const publicRoutes = ["/login", "/signup"];
