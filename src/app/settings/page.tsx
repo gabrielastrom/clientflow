@@ -100,13 +100,40 @@ export default function SettingsPage() {
         </div>
         
         <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Update your personal information and profile picture.</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle>Profile</CardTitle>
+              <CardDescription>Update your personal information.</CardDescription>
+            </div>
+            {isLoading ? (
+               <Skeleton className="h-24 w-24 rounded-full" />
+            ) : (
+                <>
+                <div
+                    className="relative group w-24 h-24 cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    <Avatar className="w-24 h-24">
+                        <AvatarImage src={currentUser?.photoURL || user?.photoURL || ''} alt={currentUser?.name} />
+                        <AvatarFallback>{currentUser?.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                        <Camera className="h-8 w-8 text-white" />
+                    </div>
+                </div>
+                <Input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handlePictureUpload}
+                    className="hidden"
+                    accept="image/png, image/jpeg, image/gif"
+                />
+                </>
+            )}
           </CardHeader>
           <CardContent>
              {isLoading ? (
-                <div className="space-y-6">
+                <div className="space-y-6 pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                         <Label><Skeleton className="h-5 w-12" /></Label>
                         <div className="md:col-span-2"><Skeleton className="h-10 w-full" /></div>
@@ -125,31 +152,6 @@ export default function SettingsPage() {
                 </div>
             ) : (
                 <form onSubmit={handleProfileUpdate} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <Label>Avatar</Label>
-                        <div className="md:col-span-2">
-                           <div
-                                className="relative group w-24 h-24 cursor-pointer"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                <Avatar className="w-24 h-24">
-                                    <AvatarImage src={currentUser?.photoURL || user?.photoURL || ''} alt={currentUser?.name} />
-                                    <AvatarFallback>{currentUser?.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                                    <Camera className="h-8 w-8 text-white" />
-                                </div>
-                            </div>
-                            <Input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handlePictureUpload}
-                                className="hidden"
-                                accept="image/png, image/jpeg, image/gif"
-                            />
-                        </div>
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                       <Label htmlFor="name">Name</Label>
                       <Input id="name" value={name} onChange={e => setName(e.target.value)} className="md:col-span-2" />
