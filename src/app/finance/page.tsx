@@ -92,6 +92,7 @@ export default function FinancePage() {
 
   const [expenseFormData, setExpenseFormData] = React.useState<{category: string, member: string, month: string}>({category: '', member: '', month: format(new Date(), "MMMM yyyy")});
   const [calculatedSalary, setCalculatedSalary] = React.useState<number | null>(null);
+  const [salaryComment, setSalaryComment] = React.useState('');
   
   const { toast } = useToast();
 
@@ -152,12 +153,14 @@ export default function FinancePage() {
   React.useEffect(() => {
     if (expenseFormData.category !== 'Salaries' || !expenseFormData.member || !expenseFormData.month) {
       setCalculatedSalary(null);
+      setSalaryComment('');
       return;
     }
 
     const member = teamMembers.find(m => m.id === expenseFormData.member);
     if (!member) {
       setCalculatedSalary(null);
+      setSalaryComment('');
       return;
     }
     
@@ -176,6 +179,7 @@ export default function FinancePage() {
     
     const salary = hoursThisMonth * (member.hourlyRate || 0);
     setCalculatedSalary(salary);
+    setSalaryComment(`Salary for ${member.name} - ${expenseFormData.month}`);
 
   }, [expenseFormData, timeEntries, teamMembers]);
 
@@ -321,16 +325,9 @@ export default function FinancePage() {
     const formData = new FormData(event.currentTarget);
 
     let amount = parseFloat(formData.get("amount") as string);
-    if (expenseFormData.category === 'Salaries' && calculatedSalary !== null && !formData.get("amount")) {
-      amount = calculatedSalary;
-    }
     
     let comment = formData.get("comment") as string;
-    if(expenseFormData.category === 'Salaries' && !comment) {
-        const member = teamMembers.find(m => m.id === expenseFormData.member);
-        comment = `Salary for ${member?.name} - ${expenseFormData.month}`;
-    }
-
+    
     const newExpenseData: Omit<Expense, "id"> = {
       amount,
       month: expenseFormData.month,
@@ -385,6 +382,7 @@ export default function FinancePage() {
   const openAddExpenseDialog = () => {
     setExpenseFormData({category: '', member: '', month: format(new Date(), "MMMM yyyy")});
     setCalculatedSalary(null);
+    setSalaryComment('');
     setIsAddExpenseOpen(true);
   }
   
@@ -398,6 +396,9 @@ export default function FinancePage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Finance</h1>
+          <p className="text-muted-foreground">
+            Track your agency&apos;s revenue and financial performance.
+          </p>
         </div>
          <div className="flex gap-2">
             <Button onClick={() => setIsAddRevenueOpen(true)}>
@@ -848,8 +849,8 @@ export default function FinancePage() {
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-comment" className="text-right">Comment</Label>
                 <Input id="expense-comment" name="comment"
-                    key={expenseFormData.member} // Re-renders the input when member changes
-                    defaultValue={isEditExpenseOpen ? selectedExpense?.comment : ''}
+                    key={salaryComment}
+                    defaultValue={isEditExpenseOpen ? selectedExpense?.comment : salaryComment}
                     className="col-span-3" />
               </div>
             </div>
@@ -881,5 +882,7 @@ export default function FinancePage() {
     </AppShell>
   );
 }
+
+    
 
     
