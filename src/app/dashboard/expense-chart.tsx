@@ -53,14 +53,14 @@ export default function FinancialChart({ data }: FinancialChartProps) {
           />
           <defs>
             <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.4}/>
-              <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
+              <stop offset="5%" stopColor="hsl(var(--chart-4))" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(var(--chart-4))" stopOpacity={0}/>
             </linearGradient>
           </defs>
           <Area
             type="monotone"
             dataKey="amount"
-            stroke="hsl(var(--destructive))"
+            stroke="hsl(var(--chart-4))"
             fillOpacity={1}
             fill="url(#colorExpense)"
             strokeWidth={2}
