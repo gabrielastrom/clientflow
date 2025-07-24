@@ -210,109 +210,170 @@ export default function TeamPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('name')}>
-                    Name
-                    {getSortIcon('name')}
-                  </Button>
-                </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  <Button variant="ghost" onClick={() => requestSort('email')}>
-                    Email
-                    {getSortIcon('email')}
-                  </Button>
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  <Button variant="ghost" onClick={() => requestSort('phone')}>
-                    Phone
-                    {getSortIcon('phone')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('role')}>
-                    Role
-                    {getSortIcon('role')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('assignedClients')}>
-                    Assigned Clients
-                    {getSortIcon('assignedClients')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-             {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-40" /></TableCell>
-                    <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('name')}>
+                      Name
+                      {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button variant="ghost" onClick={() => requestSort('email')}>
+                      Email
+                      {getSortIcon('email')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    <Button variant="ghost" onClick={() => requestSort('phone')}>
+                      Phone
+                      {getSortIcon('phone')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('role')}>
+                      Role
+                      {getSortIcon('role')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('assignedClients')}>
+                      Assigned Clients
+                      {getSortIcon('assignedClients')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+              {isLoading ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-40" /></TableCell>
+                      <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : sortedTeam.length === 0 ? (
+                  <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                          No team members found. New members are added when they sign up.
+                      </TableCell>
                   </TableRow>
+                ) : (
+                  sortedTeam.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {member.email}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {member.phone}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{member.role}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {member.assignedClients.map((clientName) => (
+                            <Badge key={clientName} variant="secondary">
+                              {clientName}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => { setSelectedMember(member); setClientsForEdit(member.assignedClients); setIsEditOpen(true); }}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedMember(member); setIsDeleteAlertOpen(true); }}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {/* Mobile Card List */}
+          <div className="md:hidden">
+            <div className="space-y-4">
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                    <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
                 ))
               ) : sortedTeam.length === 0 ? (
-                <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                        No team members found. New members are added when they sign up.
-                    </TableCell>
-                </TableRow>
+                  <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                      <p>No team members found.</p>
+                  </div>
               ) : (
                 sortedTeam.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {member.email}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {member.phone}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{member.role}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {member.assignedClients.map((clientName) => (
-                          <Badge key={clientName} variant="secondary">
-                            {clientName}
-                          </Badge>
-                        ))}
+                  <Card key={member.id}>
+                    <CardContent className="p-4 flex flex-col gap-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold">{member.name}</p>
+                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => { setSelectedMember(member); setClientsForEdit(member.assignedClients); setIsEditOpen(true); }}>Edit</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedMember(member); setIsDeleteAlertOpen(true); }}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => { setSelectedMember(member); setClientsForEdit(member.assignedClients); setIsEditOpen(true); }}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedMember(member); setIsDeleteAlertOpen(true); }}>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                      <div>
+                        <Badge variant="outline">{member.role}</Badge>
+                      </div>
+                      {member.assignedClients.length > 0 && (
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground mb-1.5">Assigned Clients</p>
+                            <div className="flex flex-wrap gap-1">
+                                {member.assignedClients.map((clientName) => (
+                                <Badge key={clientName} variant="secondary" className="text-xs">
+                                    {clientName}
+                                </Badge>
+                                ))}
+                            </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 ))
               )}
-            </TableBody>
-          </Table>
+            </div>
+          </div>
         </CardContent>
       </Card>
       
