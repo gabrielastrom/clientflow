@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -60,12 +61,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { getClients } from "@/services/clientService";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type SortableRevenueKeys = keyof Revenue;
 
 export default function FinancePage() {
   const [revenues, setRevenues] = React.useState<Revenue[]>(initialRevenues);
   const [clients, setClients] = React.useState<Client[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [selectedRevenue, setSelectedRevenue] = React.useState<Revenue | null>(null);
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -86,6 +89,7 @@ export default function FinancePage() {
 
   React.useEffect(() => {
     async function fetchClientsData() {
+      setIsLoading(true);
       try {
         const data = await getClients();
         setClients(data);
@@ -95,6 +99,8 @@ export default function FinancePage() {
           description: "Could not fetch clients.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchClientsData();
@@ -111,8 +117,6 @@ export default function FinancePage() {
           aValue = a.revenue;
           bValue = b.revenue;
         } else if (sortConfig.key === 'month') {
-          // Note: new Date() parsing can be inconsistent. For production, a more robust parsing library might be needed.
-          // For "MMMM yyyy" format, this might not sort correctly across different years without more logic.
           aValue = new Date(`1 ${a.month}`).getTime();
           bValue = new Date(`1 ${b.month}`).getTime();
         }
@@ -215,73 +219,135 @@ export default function FinancePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[120px]">
-                  <Button variant="ghost" onClick={() => requestSort('revenue')}>
-                    Revenue
-                    {getSortIcon('revenue')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('client')}>
-                    Client
-                    {getSortIcon('client')}
-                  </Button>
-                </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  <Button variant="ghost" onClick={() => requestSort('month')}>
-                    Month
-                    {getSortIcon('month')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => requestSort('comment')}>
-                    Comment
-                    {getSortIcon('comment')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedRevenues.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">
-                    {item.revenue.toLocaleString()} kr
-                  </TableCell>
-                  <TableCell>{item.client}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {item.month}
-                  </TableCell>
-                  <TableCell>{item.comment}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => { setSelectedRevenue(item); setIsEditOpen(true); }}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedRevenue(item); setIsDeleteAlertOpen(true); }}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {/* Desktop Table */}
+          <div className="hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[120px]">
+                    <Button variant="ghost" onClick={() => requestSort('revenue')}>
+                      Revenue
+                      {getSortIcon('revenue')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('client')}>
+                      Client
+                      {getSortIcon('client')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">
+                    <Button variant="ghost" onClick={() => requestSort('month')}>
+                      Month
+                      {getSortIcon('month')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => requestSort('comment')}>
+                      Comment
+                      {getSortIcon('comment')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  sortedRevenues.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="font-medium">
+                        {item.revenue.toLocaleString()} kr
+                      </TableCell>
+                      <TableCell>{item.client}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {item.month}
+                      </TableCell>
+                      <TableCell>{item.comment}</TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => { setSelectedRevenue(item); setIsEditOpen(true); }}>
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedRevenue(item); setIsDeleteAlertOpen(true); }}>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {/* Mobile Card List */}
+          <div className="md:hidden">
+              <div className="space-y-4">
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+                    ))
+                ) : sortedRevenues.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                        <p>No revenue entries found.</p>
+                    </div>
+                ) : (
+                    sortedRevenues.map((item) => (
+                    <Card key={item.id}>
+                        <CardContent className="p-4 flex flex-col gap-3">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-semibold text-lg">{item.revenue.toLocaleString()} kr</p>
+                                <p className="text-sm font-medium">{item.client}</p>
+                                <p className="text-sm text-muted-foreground">{item.month}</p>
+                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Toggle menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem onSelect={() => { setSelectedRevenue(item); setIsEditOpen(true); }}>Edit</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedRevenue(item); setIsDeleteAlertOpen(true); }}>
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        {item.comment && (
+                            <p className="text-sm text-muted-foreground pt-2 border-t mt-2">{item.comment}</p>
+                        )}
+                        </CardContent>
+                    </Card>
+                    ))
+                )}
+              </div>
+            </div>
         </CardContent>
       </Card>
 
