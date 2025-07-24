@@ -183,8 +183,8 @@ export default function ContentPage() {
     const newContentData: Omit<Content, "id"> = {
       title: formData.get("title") as string,
       client: formData.get("client") as string,
-      status: formData.get("status") as Content["status"],
-      platform: formData.get("platform") as Content["platform"],
+      status: (formData.get("status") as Content["status"]) || "To Do",
+      platform: (formData.get("platform") as Content["platform"]) || "Instagram",
       deadline: formData.get("deadline") as string,
       owner: formData.get("owner") as string,
       link: formData.get("link") as string || undefined,
