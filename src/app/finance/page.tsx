@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { type Revenue, type Client } from "@/lib/types";
+import { type Revenue, type Client, type Expense } from "@/lib/types";
 import { PlusCircle, MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -60,20 +60,31 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { getClients } from "@/services/clientService";
 import { listenToRevenues, addRevenue, updateRevenue, deleteRevenue } from "@/services/revenueService";
+import { listenToExpenses, addExpense, updateExpense, deleteExpense } from "@/services/expenseService";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type SortableRevenueKeys = keyof Revenue;
+type SortableExpenseKeys = keyof Expense;
 
 export default function FinancePage() {
   const [revenues, setRevenues] = React.useState<Revenue[]>([]);
+  const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [clients, setClients] = React.useState<Client[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  
   const [selectedRevenue, setSelectedRevenue] = React.useState<Revenue | null>(null);
-  const [isAddOpen, setIsAddOpen] = React.useState(false);
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
-  const [sortConfig, setSortConfig] = React.useState<{ key: SortableRevenueKeys; direction: 'ascending' | 'descending' } | null>(null);
+  const [isAddRevenueOpen, setIsAddRevenueOpen] = React.useState(false);
+  const [isEditRevenueOpen, setIsEditRevenueOpen] = React.useState(false);
+  const [isDeleteRevenueAlertOpen, setIsDeleteRevenueAlertOpen] = React.useState(false);
+
+  const [selectedExpense, setSelectedExpense] = React.useState<Expense | null>(null);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = React.useState(false);
+  const [isEditExpenseOpen, setIsEditExpenseOpen] = React.useState(false);
+  const [isDeleteExpenseAlertOpen, setIsDeleteExpenseAlertOpen] = React.useState(false);
+
+  const [sortConfigRevenue, setSortConfigRevenue] = React.useState<{ key: SortableRevenueKeys; direction: 'ascending' | 'descending' } | null>(null);
+  const [sortConfigExpense, setSortConfigExpense] = React.useState<{ key: SortableExpenseKeys; direction: 'ascending' | 'descending' } | null>(null);
 
   const { toast } = useToast();
 
@@ -88,78 +99,120 @@ export default function FinancePage() {
   }, []);
 
   React.useEffect(() => {
-    async function fetchClientsData() {
+    let active = true;
+    async function fetchData() {
+      setIsLoading(true);
       try {
-        const data = await getClients();
-        setClients(data);
+        const clientData = await getClients();
+        if (active) setClients(clientData);
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Could not fetch clients.",
-          variant: "destructive",
-        });
+        toast({ title: "Error", description: "Could not fetch clients.", variant: "destructive" });
       }
     }
     
-    fetchClientsData();
+    fetchData();
 
     const unsubscribeRevenues = listenToRevenues((revenuesData) => {
-        setRevenues(revenuesData);
-        setIsLoading(false);
+        if (active) setRevenues(revenuesData);
+    });
+
+    const unsubscribeExpenses = listenToExpenses((expensesData) => {
+        if (active) {
+            setExpenses(expensesData);
+            setIsLoading(false);
+        }
     });
 
     return () => {
+        active = false;
         unsubscribeRevenues();
+        unsubscribeExpenses();
     };
 
   }, [toast]);
 
   const sortedRevenues = React.useMemo(() => {
     let sortableItems = [...revenues];
-    if (sortConfig !== null) {
+    if (sortConfigRevenue !== null) {
       sortableItems.sort((a, b) => {
-        let aValue: string | number = a[sortConfig.key];
-        let bValue: string | number = b[sortConfig.key];
+        let aValue: string | number = a[sortConfigRevenue.key];
+        let bValue: string | number = b[sortConfigRevenue.key];
   
-        if (sortConfig.key === 'revenue') {
+        if (sortConfigRevenue.key === 'revenue') {
           aValue = a.revenue;
           bValue = b.revenue;
-        } else if (sortConfig.key === 'month') {
+        } else if (sortConfigRevenue.key === 'month') {
           aValue = new Date(`1 ${a.month}`).getTime();
           bValue = new Date(`1 ${b.month}`).getTime();
         }
   
         if (aValue < bValue) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
+          return sortConfigRevenue.direction === 'ascending' ? -1 : 1;
         }
         if (aValue > bValue) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
+          return sortConfigRevenue.direction === 'ascending' ? 1 : -1;
         }
         return 0;
       });
     }
     return sortableItems;
-  }, [revenues, sortConfig]);
+  }, [revenues, sortConfigRevenue]);
 
-  const requestSort = (key: SortableRevenueKeys) => {
+  const sortedExpenses = React.useMemo(() => {
+    let sortableItems = [...expenses];
+    if (sortConfigExpense !== null) {
+      sortableItems.sort((a, b) => {
+        let aValue: string | number = a[sortConfigExpense.key];
+        let bValue: string | number = b[sortConfigExpense.key];
+  
+        if (sortConfigExpense.key === 'amount') {
+          aValue = a.amount;
+          bValue = b.amount;
+        } else if (sortConfigExpense.key === 'month') {
+          aValue = new Date(`1 ${a.month}`).getTime();
+          bValue = new Date(`1 ${b.month}`).getTime();
+        }
+  
+        if (aValue < bValue) {
+          return sortConfigExpense.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfigExpense.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [expenses, sortConfigExpense]);
+
+  const requestSortRevenue = (key: SortableRevenueKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+    if (sortConfigRevenue && sortConfigRevenue.key === key && sortConfigRevenue.direction === 'ascending') {
       direction = 'descending';
     }
-    setSortConfig({ key, direction });
+    setSortConfigRevenue({ key, direction });
+  };
+
+  const requestSortExpense = (key: SortableExpenseKeys) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfigExpense && sortConfigExpense.key === key && sortConfigExpense.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfigExpense({ key, direction });
   };
   
-  const getSortIcon = (key: SortableRevenueKeys) => {
-    if (!sortConfig || sortConfig.key !== key) {
+  const getSortIcon = (key: string, type: 'revenue' | 'expense') => {
+    const config = type === 'revenue' ? sortConfigRevenue : sortConfigExpense;
+    if (!config || config.key !== key) {
       return <ArrowUpDown className="ml-2 h-4 w-4" />;
     }
-    if (sortConfig.direction === 'ascending') {
+    if (config.direction === 'ascending') {
       return <ArrowUp className="ml-2 h-4 w-4 text-primary" />;
     }
     return <ArrowDown className="ml-2 h-4 w-4 text-primary" />;
   };
 
-  const handleAddSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddRevenueSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const newRevenueData: Omit<Revenue, "id"> = {
@@ -171,14 +224,14 @@ export default function FinancePage() {
 
     try {
         await addRevenue(newRevenueData);
-        setIsAddOpen(false);
+        setIsAddRevenueOpen(false);
         toast({ title: "Success", description: "Revenue added successfully." });
     } catch (error) {
         toast({ title: "Error", description: "Could not add revenue.", variant: "destructive" });
     }
   };
   
-  const handleEditSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleEditRevenueSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedRevenue) return;
 
@@ -193,7 +246,7 @@ export default function FinancePage() {
     
     try {
         await updateRevenue(updatedRevenue);
-        setIsEditOpen(false);
+        setIsEditRevenueOpen(false);
         toast({ title: "Success", description: "Revenue updated successfully." });
     } catch (error) {
         toast({ title: "Error", description: "Could not update revenue.", variant: "destructive" });
@@ -204,7 +257,7 @@ export default function FinancePage() {
     if (!selectedRevenue) return;
     try {
         await deleteRevenue(selectedRevenue.id);
-        setIsDeleteAlertOpen(false);
+        setIsDeleteRevenueAlertOpen(false);
         toast({
           title: "Revenue Deleted",
           description: `The revenue entry has been removed.`,
@@ -213,6 +266,60 @@ export default function FinancePage() {
          toast({ title: "Error", description: "Could not delete revenue.", variant: "destructive" });
     }
   };
+
+  const handleAddExpenseSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const newExpenseData: Omit<Expense, "id"> = {
+      amount: parseFloat(formData.get("amount") as string),
+      month: formData.get("month") as string,
+      category: formData.get("category") as string,
+      comment: formData.get("comment") as string,
+    };
+
+    try {
+        await addExpense(newExpenseData);
+        setIsAddExpenseOpen(false);
+        toast({ title: "Success", description: "Expense added successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not add expense.", variant: "destructive" });
+    }
+  };
+  
+  const handleEditExpenseSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedExpense) return;
+
+    const formData = new FormData(event.currentTarget);
+    const updatedExpense: Expense = {
+      ...selectedExpense,
+      amount: parseFloat(formData.get("amount") as string),
+      month: formData.get("month") as string,
+      category: formData.get("category") as string,
+      comment: formData.get("comment") as string,
+    };
+    
+    try {
+        await updateExpense(updatedExpense);
+        setIsEditExpenseOpen(false);
+        toast({ title: "Success", description: "Expense updated successfully." });
+    } catch (error) {
+        toast({ title: "Error", description: "Could not update expense.", variant: "destructive" });
+    }
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!selectedExpense) return;
+    try {
+        await deleteExpense(selectedExpense.id);
+        setIsDeleteExpenseAlertOpen(false);
+        toast({ title: "Expense Deleted", description: `The expense entry has been removed.` });
+    } catch (error) {
+         toast({ title: "Error", description: "Could not delete expense.", variant: "destructive" });
+    }
+  };
+
+  const expenseCategories = ["Software", "Marketing", "Office Supplies", "Salaries", "Other"];
 
   return (
     <AppShell>
@@ -223,171 +330,325 @@ export default function FinancePage() {
             Track your agency's revenue and financial performance.
           </p>
         </div>
-         <Button onClick={() => setIsAddOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Revenue
-        </Button>
+         <div className="flex gap-2">
+            <Button onClick={() => setIsAddRevenueOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Revenue
+            </Button>
+            <Button onClick={() => setIsAddExpenseOpen(true)} variant="secondary">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Expense
+            </Button>
+         </div>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Log</CardTitle>
-          <CardDescription>
-            A detailed record of all incoming revenue.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Desktop Table */}
-          <div className="hidden md:block">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[120px]">
-                    <Button variant="ghost" onClick={() => requestSort('revenue')}>
-                      Revenue
-                      {getSortIcon('revenue')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('client')}>
-                      Client
-                      {getSortIcon('client')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    <Button variant="ghost" onClick={() => requestSort('month')}>
-                      Month
-                      {getSortIcon('month')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('comment')}>
-                      Comment
-                      {getSortIcon('comment')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
-                      <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-8 w-8" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : sortedRevenues.length === 0 ? (
+      <div className="grid gap-6">
+        <Card>
+            <CardHeader>
+            <CardTitle>Revenue Log</CardTitle>
+            <CardDescription>
+                A detailed record of all incoming revenue.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+                <Table>
+                <TableHeader>
                     <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                            No revenue entries found.
-                        </TableCell>
+                    <TableHead className="w-[120px]">
+                        <Button variant="ghost" onClick={() => requestSortRevenue('revenue')}>
+                        Revenue
+                        {getSortIcon('revenue', 'revenue')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => requestSortRevenue('client')}>
+                        Client
+                        {getSortIcon('client', 'revenue')}
+                        </Button>
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                        <Button variant="ghost" onClick={() => requestSortRevenue('month')}>
+                        Month
+                        {getSortIcon('month', 'revenue')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => requestSortRevenue('comment')}>
+                        Comment
+                        {getSortIcon('comment', 'revenue')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <span className="sr-only">Actions</span>
+                    </TableHead>
                     </TableRow>
-                ) : (
-                  sortedRevenues.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium">
-                        {item.revenue.toLocaleString()} kr
-                      </TableCell>
-                      <TableCell>{item.client}</TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {item.month}
-                      </TableCell>
-                      <TableCell>{item.comment}</TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => { setSelectedRevenue(item); setIsEditOpen(true); }}>
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedRevenue(item); setIsDeleteAlertOpen(true); }}>
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          {/* Mobile Card List */}
-          <div className="md:hidden">
-              <div className="space-y-4">
-                {isLoading ? (
+                </TableHeader>
+                <TableBody>
+                    {isLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
-                        <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+                        <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                        </TableRow>
                     ))
-                ) : sortedRevenues.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
-                        <p>No revenue entries found.</p>
-                    </div>
-                ) : (
+                    ) : sortedRevenues.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                No revenue entries found.
+                            </TableCell>
+                        </TableRow>
+                    ) : (
                     sortedRevenues.map((item) => (
-                    <Card key={item.id}>
-                        <CardContent className="p-4 flex flex-col gap-3">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="font-semibold text-lg">{item.revenue.toLocaleString()} kr</p>
-                                <p className="text-sm font-medium">{item.client}</p>
-                                <p className="text-sm text-muted-foreground">{item.month}</p>
-                            </div>
+                        <TableRow key={item.id}>
+                        <TableCell className="font-medium">
+                            {item.revenue.toLocaleString()} kr
+                        </TableCell>
+                        <TableCell>{item.client}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                            {item.month}
+                        </TableCell>
+                        <TableCell>{item.comment}</TableCell>
+                        <TableCell>
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Toggle menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem onSelect={() => { setSelectedRevenue(item); setIsEditOpen(true); }}>Edit</DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedRevenue(item); setIsDeleteAlertOpen(true); }}>
-                                        Delete
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onSelect={() => { setSelectedRevenue(item); setIsEditRevenueOpen(true); }}>
+                                Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedRevenue(item); setIsDeleteRevenueAlertOpen(true); }}>
+                                Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
                             </DropdownMenu>
-                        </div>
-                        {item.comment && (
-                            <p className="text-sm text-muted-foreground pt-2 border-t mt-2">{item.comment}</p>
-                        )}
-                        </CardContent>
-                    </Card>
+                        </TableCell>
+                        </TableRow>
                     ))
-                )}
-              </div>
+                    )}
+                </TableBody>
+                </Table>
             </div>
-        </CardContent>
-      </Card>
+            {/* Mobile Card List */}
+            <div className="md:hidden">
+                <div className="space-y-4">
+                    {isLoading ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                            <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+                        ))
+                    ) : sortedRevenues.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                            <p>No revenue entries found.</p>
+                        </div>
+                    ) : (
+                        sortedRevenues.map((item) => (
+                        <Card key={item.id}>
+                            <CardContent className="p-4 flex flex-col gap-3">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-semibold text-lg">{item.revenue.toLocaleString()} kr</p>
+                                    <p className="text-sm font-medium">{item.client}</p>
+                                    <p className="text-sm text-muted-foreground">{item.month}</p>
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem onSelect={() => { setSelectedRevenue(item); setIsEditRevenueOpen(true); }}>Edit</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedRevenue(item); setIsDeleteRevenueAlertOpen(true); }}>
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            {item.comment && (
+                                <p className="text-sm text-muted-foreground pt-2 border-t mt-2">{item.comment}</p>
+                            )}
+                            </CardContent>
+                        </Card>
+                        ))
+                    )}
+                </div>
+                </div>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+            <CardTitle>Expense Log</CardTitle>
+            <CardDescription>
+                A detailed record of all outgoing expenses.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead className="w-[120px]">
+                        <Button variant="ghost" onClick={() => requestSortExpense('amount')}>
+                        Amount
+                        {getSortIcon('amount', 'expense')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => requestSortExpense('category')}>
+                        Category
+                        {getSortIcon('category', 'expense')}
+                        </Button>
+                    </TableHead>
+                    <TableHead className="hidden md:table-cell">
+                        <Button variant="ghost" onClick={() => requestSortExpense('month')}>
+                        Month
+                        {getSortIcon('month', 'expense')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <Button variant="ghost" onClick={() => requestSortExpense('comment')}>
+                        Comment
+                        {getSortIcon('comment', 'expense')}
+                        </Button>
+                    </TableHead>
+                    <TableHead>
+                        <span className="sr-only">Actions</span>
+                    </TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                        </TableRow>
+                    ))
+                    ) : sortedExpenses.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center">
+                                No expense entries found.
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                    sortedExpenses.map((item) => (
+                        <TableRow key={item.id}>
+                        <TableCell className="font-medium">
+                            {item.amount.toLocaleString()} kr
+                        </TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                            {item.month}
+                        </TableCell>
+                        <TableCell>{item.comment}</TableCell>
+                        <TableCell>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem onSelect={() => { setSelectedExpense(item); setIsEditExpenseOpen(true); }}>
+                                Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedExpense(item); setIsDeleteExpenseAlertOpen(true); }}>
+                                Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                        </TableRow>
+                    ))
+                    )}
+                </TableBody>
+                </Table>
+            </div>
+            {/* Mobile Card List */}
+            <div className="md:hidden">
+                <div className="space-y-4">
+                    {isLoading ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                            <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+                        ))
+                    ) : sortedExpenses.length === 0 ? (
+                        <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                            <p>No expense entries found.</p>
+                        </div>
+                    ) : (
+                        sortedExpenses.map((item) => (
+                        <Card key={item.id}>
+                            <CardContent className="p-4 flex flex-col gap-3">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-semibold text-lg">{item.amount.toLocaleString()} kr</p>
+                                    <p className="text-sm font-medium">{item.category}</p>
+                                    <p className="text-sm text-muted-foreground">{item.month}</p>
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Toggle menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                        <DropdownMenuItem onSelect={() => { setSelectedExpense(item); setIsEditExpenseOpen(true); }}>Edit</DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedExpense(item); setIsDeleteExpenseAlertOpen(true); }}>
+                                            Delete
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                            {item.comment && (
+                                <p className="text-sm text-muted-foreground pt-2 border-t mt-2">{item.comment}</p>
+                            )}
+                            </CardContent>
+                        </Card>
+                        ))
+                    )}
+                </div>
+                </div>
+            </CardContent>
+        </Card>
+      </div>
 
-      {/* Add/Edit Dialog */}
-      <Dialog open={isAddOpen || isEditOpen} onOpenChange={isAddOpen ? setIsAddOpen : setIsEditOpen}>
+      {/* Add/Edit Revenue Dialog */}
+      <Dialog open={isAddRevenueOpen || isEditRevenueOpen} onOpenChange={isAddRevenueOpen ? setIsAddRevenueOpen : setIsEditRevenueOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isAddOpen ? "Add New Revenue" : "Edit Revenue"}</DialogTitle>
+            <DialogTitle>{isAddRevenueOpen ? "Add New Revenue" : "Edit Revenue"}</DialogTitle>
             <DialogDescription>
-              {isAddOpen ? "Fill in the details for the new revenue entry." : "Make changes to the revenue entry."}
+              {isAddRevenueOpen ? "Fill in the details for the new revenue entry." : "Make changes to the revenue entry."}
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={isAddOpen ? handleAddSubmit : handleEditSubmit}>
+          <form onSubmit={isAddRevenueOpen ? handleAddRevenueSubmit : handleEditRevenueSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="revenue" className="text-right">Revenue</Label>
-                <Input id="revenue" name="revenue" type="number" defaultValue={selectedRevenue?.revenue} className="col-span-3" required />
+                <Input id="revenue" name="revenue" type="number" step="0.01" defaultValue={selectedRevenue?.revenue} className="col-span-3" required />
               </div>
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="client" className="text-right">Client</Label>
@@ -422,14 +683,14 @@ export default function FinancePage() {
             </div>
             <DialogFooter>
               <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-              <Button type="submit">{isAddOpen ? "Add Revenue" : "Save Changes"}</Button>
+              <Button type="submit">{isAddRevenueOpen ? "Add Revenue" : "Save Changes"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
       
-      {/* Delete Alert */}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+      {/* Delete Revenue Alert */}
+      <AlertDialog open={isDeleteRevenueAlertOpen} onOpenChange={setIsDeleteRevenueAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -440,6 +701,78 @@ export default function FinancePage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDeleteRevenue}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+       {/* Add/Edit Expense Dialog */}
+      <Dialog open={isAddExpenseOpen || isEditExpenseOpen} onOpenChange={isAddExpenseOpen ? setIsAddExpenseOpen : setIsEditExpenseOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isAddExpenseOpen ? "Add New Expense" : "Edit Expense"}</DialogTitle>
+            <DialogDescription>
+              {isAddExpenseOpen ? "Fill in the details for the new expense entry." : "Make changes to the expense entry."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={isAddExpenseOpen ? handleAddExpenseSubmit : handleEditExpenseSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-amount" className="text-right">Amount</Label>
+                <Input id="expense-amount" name="amount" type="number" step="0.01" defaultValue={selectedExpense?.amount} className="col-span-3" required />
+              </div>
+               <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-category" className="text-right">Category</Label>
+                <Select name="category" defaultValue={selectedExpense?.category}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {expenseCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-month" className="text-right">Month</Label>
+                <Select name="month" defaultValue={selectedExpense?.month || format(new Date(), "MMMM yyyy")}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select a month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((month) => (
+                        <SelectItem key={month} value={month}>{month}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="expense-comment" className="text-right">Comment</Label>
+                <Input id="expense-comment" name="comment" defaultValue={selectedExpense?.comment} className="col-span-3" />
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+              <Button type="submit">{isAddExpenseOpen ? "Add Expense" : "Save Changes"}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete Expense Alert */}
+      <AlertDialog open={isDeleteExpenseAlertOpen} onOpenChange={setIsDeleteExpenseAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the expense entry.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={handleDeleteExpense}>
               Continue
             </AlertDialogAction>
           </AlertDialogFooter>

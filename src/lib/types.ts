@@ -51,6 +51,14 @@ export type Revenue = {
     comment: string;
 };
 
+export type Expense = {
+  id: string;
+  amount: number;
+  month: string;
+  category: string;
+  comment: string;
+};
+
 export type Content = {
   id: string;
   title: string;
