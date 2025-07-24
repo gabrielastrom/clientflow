@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import ReactMarkdown from "react-markdown";
 
 export default function ArticlePage({ params }: { params: { slug: string } }) {
     const [article, setArticle] = React.useState<Article | null>(null);
@@ -133,7 +134,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
                 </div>
                 <Card>
                     <CardContent className="prose dark:prose-invert max-w-none pt-6 text-base">
-                       <p>{article.content}</p>
+                       <ReactMarkdown>{article.content}</ReactMarkdown>
                     </CardContent>
                 </Card>
             </div>
