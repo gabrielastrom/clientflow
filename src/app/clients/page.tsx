@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -227,6 +228,27 @@ export default function ClientsPage() {
         return '';
     }
   };
+  
+  const clientStatusBadge = (status: Client['status']) => {
+    return (
+        <Badge
+            variant={
+                status === "Active"
+                ? "default"
+                : status === "Lead"
+                ? "secondary"
+                : "outline"
+            }
+            className={
+                status === "Active"
+                ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
+                : ""
+            }
+        >
+            {status}
+        </Badge>
+    );
+  }
 
   return (
     <AppShell>
@@ -251,7 +273,8 @@ export default function ClientsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="relative w-full overflow-auto">
+             {/* Desktop Table */}
+            <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -327,22 +350,7 @@ export default function ClientsPage() {
                       <TableRow key={client.id}>
                         <TableCell className="font-medium">{client.name}</TableCell>
                         <TableCell>
-                          <Badge
-                            variant={
-                              client.status === "Active"
-                                ? "default"
-                                : client.status === "Lead"
-                                ? "secondary"
-                                : "outline"
-                            }
-                            className={
-                              client.status === "Active"
-                                ? "bg-green-500/20 text-green-700 border-green-500/20 hover:bg-green-500/30"
-                                : ""
-                            }
-                          >
-                            {client.status}
-                          </Badge>
+                          {clientStatusBadge(client.status)}
                         </TableCell>
                         <TableCell>{client.contactPerson}</TableCell>
                         <TableCell className="hidden md:table-cell">
@@ -403,6 +411,56 @@ export default function ClientsPage() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+             {/* Mobile Card List */}
+             <div className="md:hidden">
+              <div className="space-y-4">
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <Card key={i}><CardContent className="p-4"><Skeleton className="h-24 w-full" /></CardContent></Card>
+                    ))
+                ) : sortedClients.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
+                        <p>No clients found.</p>
+                    </div>
+                ) : (
+                    sortedClients.map((client) => (
+                    <Card key={client.id}>
+                        <CardContent className="p-4 flex flex-col gap-2">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-semibold">{client.name}</p>
+                                <p className="text-sm text-muted-foreground">{client.contactPerson}</p>
+                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Toggle menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem onSelect={() => { setSelectedClient(client); setIsEditOpen(true); }}>Edit</DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => { setSelectedClient(client); setIsViewOpen(true); }}>View Details</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onSelect={() => { setSelectedClient(client); setIsDeleteAlertOpen(true); }}>
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                            {clientStatusBadge(client.status)}
+                            <div className="text-muted-foreground">
+                                <span className="font-medium">{client.monthlyVideos}</span> videos/mo
+                            </div>
+                        </div>
+                        </CardContent>
+                    </Card>
+                    ))
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
