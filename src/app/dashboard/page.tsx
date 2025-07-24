@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
-import { financialData, appointments as allAppointments, content, clients } from "@/lib/data";
-import { type Appointment, type TeamMember, type TimeEntry, type Content } from "@/lib/types";
+import { financialData, appointments as allAppointments, clients } from "@/lib/data";
+import { type Appointment, type TeamMember, type TimeEntry, type Content, type Revenue } from "@/lib/types";
 import { Clock, DollarSign, Pencil } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getContent as fetchContent } from "@/services/contentService";
 import { useAuth } from "@/contexts/auth-context";
+import { listenToRevenues } from "@/services/revenueService";
 
 
 type TeamPerformanceData = {
@@ -56,6 +57,9 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [currentUserData, setCurrentUserData] = React.useState<TeamMember | null>(null);
   const [notes, setNotes] = React.useState("");
+  const [monthlyRevenue, setMonthlyRevenue] = React.useState(0);
+  const [revenueChange, setRevenueChange] = React.useState(0);
+
 
   React.useEffect(() => {
     const today = new Date();
@@ -117,8 +121,35 @@ export default function DashboardPage() {
         if (teamData) setIsLoadingTeam(false);
     });
 
+    const unsubscribeRevenues = listenToRevenues((allRevenues) => {
+        const now = new Date();
+        const currentMonthName = format(now, 'MMMM yyyy');
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthName = format(lastMonth, 'MMMM yyyy');
+
+        const currentMonthTotal = allRevenues
+            .filter(r => r.month === currentMonthName)
+            .reduce((sum, r) => sum + r.revenue, 0);
+        
+        setMonthlyRevenue(currentMonthTotal);
+
+        const lastMonthTotal = allRevenues
+            .filter(r => r.month === lastMonthName)
+            .reduce((sum, r) => sum + r.revenue, 0);
+
+        if (lastMonthTotal > 0) {
+            const change = ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
+            setRevenueChange(change);
+        } else if (currentMonthTotal > 0) {
+            setRevenueChange(100);
+        } else {
+            setRevenueChange(0);
+        }
+    });
+
     return () => {
         unsubscribeTeam();
+        unsubscribeRevenues();
     };
   }, [toast]);
 
@@ -222,10 +253,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {financialData.monthly.revenue.toLocaleString()} kr
+                {monthlyRevenue.toLocaleString()} kr
               </div>
               <p className="text-xs text-muted-foreground">
-                +10.2% from last month
+                {revenueChange >= 0 ? '+' : ''}{revenueChange.toFixed(1)}% from last month
               </p>
             </CardContent>
           </Card>
