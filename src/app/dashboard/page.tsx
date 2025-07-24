@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getContent as fetchContent } from "@/services/contentService";
+import { useAuth } from "@/contexts/auth-context";
 
 
 type TeamPerformanceData = {
@@ -41,6 +42,7 @@ type TeamPerformanceData = {
 
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [weeklyAppointments, setWeeklyAppointments] = React.useState<Appointment[]>([]);
   const [weekDates, setWeekDates] = React.useState<Date[]>([]);
   const [doneContentCount, setDoneContentCount] = React.useState(0);
@@ -52,6 +54,8 @@ export default function DashboardPage() {
   const [selectedMemberForRateEdit, setSelectedMemberForRateEdit] = React.useState<TeamMember | null>(null);
   const [isRateEditDialogOpen, setIsRateEditDialogOpen] = React.useState(false);
   const { toast } = useToast();
+  const [currentUserData, setCurrentUserData] = React.useState<TeamMember | null>(null);
+  const [notes, setNotes] = React.useState("");
 
   React.useEffect(() => {
     const today = new Date();
@@ -117,6 +121,37 @@ export default function DashboardPage() {
         unsubscribeTeam();
     };
   }, [toast]);
+
+  React.useEffect(() => {
+    if (user && team.length > 0) {
+      const userData = team.find(m => m.id === user.uid) || null;
+      setCurrentUserData(userData);
+      if (userData) {
+          setNotes(userData.notes || "");
+      }
+    }
+  }, [user, team]);
+
+  // Debounced effect for saving notes
+  React.useEffect(() => {
+    if (!currentUserData || notes === (currentUserData.notes || '')) {
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      try {
+        await updateTeamMember({ ...currentUserData, notes });
+      } catch (error) {
+        console.error("Failed to save notes:", error);
+        toast({ title: "Error", description: "Failed to save your notes.", variant: "destructive" });
+      }
+    }, 1000); // Save after 1 second of inactivity
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [notes, currentUserData, toast]);
+
 
   React.useEffect(() => {
     if (team.length === 0 || timeEntries.length === 0) return;
@@ -410,7 +445,13 @@ export default function DashboardPage() {
             <CardDescription>Your personal scratchpad for quick notes and reminders.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Textarea placeholder="Type your notes here..." className="h-48 resize-none" />
+             <Textarea 
+                placeholder="Type your notes here..." 
+                className="h-48 resize-none"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                disabled={!currentUserData} 
+            />
           </CardContent>
         </Card>
       </div>
@@ -456,5 +497,3 @@ export default function DashboardPage() {
     </AppShell>
   );
 }
-
-    
