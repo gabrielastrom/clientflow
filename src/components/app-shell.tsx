@@ -228,8 +228,7 @@ function UserMenu({ isMobile = false }) {
           <Button variant="ghost" size="icon" className="rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src={user?.photoURL || "https://placehold.co/100x100.png"}
-                data-ai-hint="person user"
+                src={user?.photoURL || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cHJvZmlsZXxlbnwwfHx8fDE3NTMyNjM5MTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
                 alt="User Avatar"
               />
               <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
@@ -239,8 +238,7 @@ function UserMenu({ isMobile = false }) {
           <SidebarMenuButton className="h-auto group-data-[collapsible=icon]:p-2">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src={user?.photoURL || "https://placehold.co/100x100.png"}
-                data-ai-hint="person user"
+                src={user?.photoURL || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cHJvZmlsZXxlbnwwfHx8fDE3NTMyNjM5MTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
                 alt="User Avatar"
               />
               <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>

@@ -100,7 +100,7 @@ export default function DashboardPage() {
   }, [toast]);
 
   React.useEffect(() => {
-    if (team.length === 0) return;
+    if (team.length === 0 || timeEntries.length === 0) return;
 
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
@@ -159,7 +159,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         </div>
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <Card>
+          <Card className="bg-black text-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Month's Revenue
@@ -261,7 +261,7 @@ export default function DashboardPage() {
               ) : teamPerformance.map((member) => (
                 <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
                    <Avatar className="h-12 w-12">
-                    <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="person user" />
+                    <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cHJvZmlsZXxlbnwwfHx8fDE3NTMyNjM5MTN8MA&ixlib=rb-4.1.0&q=80&w=1080" />
                     <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                 ) : team.map((member) => (
                 <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
                    <Avatar className="h-12 w-12">
-                    <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="person user" />
+                    <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cHJvZmlsZXxlbnwwfHx8fDE3NTMyNjM5MTN8MA&ixlib=rb-4.1.0&q=80&w=1080" />
                     <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
