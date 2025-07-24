@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -65,6 +66,8 @@ import { listenToTeamMembers } from "@/services/teamService";
 import { getContent, addContent, updateContent, deleteContent } from "@/services/contentService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getClients } from "@/services/clientService";
+import { Switch } from "@/components/ui/switch";
+import { isWithinInterval, startOfMonth, endOfMonth } from 'date-fns';
 
 type SortableContentKeys = keyof Omit<Content, 'id' | 'link' | 'description'>;
 
@@ -80,6 +83,7 @@ export default function ContentPage() {
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);
   const [isTaskStatusModalOpen, setIsTaskStatusModalOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableContentKeys; direction: 'ascending' | 'descending' } | null>(null);
+  const [showCurrentMonthOnly, setShowCurrentMonthOnly] = React.useState(false);
 
   const { toast } = useToast();
   
@@ -111,7 +115,19 @@ export default function ContentPage() {
 
 
   const sortedContent = React.useMemo(() => {
-    let sortableItems = [...contentList];
+    let filteredItems = [...contentList];
+
+    if (showCurrentMonthOnly) {
+      const today = new Date();
+      const start = startOfMonth(today);
+      const end = endOfMonth(today);
+      filteredItems = filteredItems.filter(item => {
+        const deadline = new Date(item.deadline);
+        return isWithinInterval(deadline, { start, end });
+      });
+    }
+
+    let sortableItems = [...filteredItems];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         const aValue = a[sortConfig.key];
@@ -126,7 +142,7 @@ export default function ContentPage() {
       });
     }
     return sortableItems;
-  }, [contentList, sortConfig]);
+  }, [contentList, sortConfig, showCurrentMonthOnly]);
 
   const requestSort = (key: SortableContentKeys) => {
     let direction: 'ascending' | 'descending' = 'ascending';
@@ -271,10 +287,22 @@ export default function ContentPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Content Pipeline</CardTitle>
-          <CardDescription>
-            An overview of all content in different stages.
-          </CardDescription>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Content Pipeline</CardTitle>
+              <CardDescription>
+                An overview of all content in different stages.
+              </CardDescription>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="current-month" 
+                checked={showCurrentMonthOnly}
+                onCheckedChange={setShowCurrentMonthOnly}
+              />
+              <Label htmlFor="current-month">Current Month Only</Label>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {/* Desktop Table */}
@@ -339,7 +367,7 @@ export default function ContentPage() {
                 ) : sortedContent.length === 0 ? (
                   <TableRow>
                       <TableCell colSpan={8} className="h-24 text-center">
-                          No content found. Add content to get started.
+                          {showCurrentMonthOnly ? "No content found for the current month." : "No content found. Add content to get started."}
                       </TableCell>
                   </TableRow>
                 ) : (
@@ -404,7 +432,7 @@ export default function ContentPage() {
                   ))
               ) : sortedContent.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8 rounded-lg border-2 border-dashed">
-                      <p>No content found.</p>
+                      <p>{showCurrentMonthOnly ? "No content found for the current month." : "No content found."}</p>
                   </div>
               ) : (
                   sortedContent.map((item) => (
