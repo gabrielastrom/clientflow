@@ -26,6 +26,7 @@ const protectedRoutes = [
     "/finance",
     "/content",
     "/tracking",
+    "/knowledge-base",
     "/settings",
 ];
 

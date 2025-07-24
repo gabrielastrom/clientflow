@@ -114,7 +114,7 @@ export default function SettingsPage() {
                     onClick={() => fileInputRef.current?.click()}
                 >
                     <Avatar className="w-24 h-24">
-                        <AvatarImage src={currentUser?.photoURL || user?.photoURL || ''} alt={currentUser?.name} />
+                        <AvatarImage src={currentUser?.photoURL || ''} alt={currentUser?.name} />
                         <AvatarFallback>{currentUser?.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">

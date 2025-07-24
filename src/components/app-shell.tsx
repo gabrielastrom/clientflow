@@ -47,6 +47,8 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/contexts/auth-context";
 import { signOut } from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
+import type { TeamMember } from "@/lib/types";
+import { listenToTeamMembers } from "@/services/teamService";
 
 const navItems = [
   { href: "/home", icon: Home, label: "Home" },
@@ -203,8 +205,19 @@ function ThemeToggle() {
 
 function UserMenu({ isMobile = false }) {
   const { user } = useAuth();
+  const [currentUser, setCurrentUser] = React.useState<TeamMember | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (user) {
+      const unsubscribe = listenToTeamMembers((teamData) => {
+        const userProfile = teamData.find(member => member.id === user.uid);
+        setCurrentUser(userProfile || null);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -219,10 +232,14 @@ function UserMenu({ isMobile = false }) {
     }
   };
 
-  const getInitials = (email: string | null | undefined) => {
-    if (!email) return 'U';
-    return email.substring(0, 2).toUpperCase();
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('');
   }
+
+  const displayName = currentUser?.name || user?.email?.split('@')[0] || "User";
+  const displayEmail = currentUser?.email || user?.email || "";
+  const displayPhoto = currentUser?.photoURL || user?.photoURL || "";
 
   const dropdownMenu = (
     <DropdownMenu>
@@ -231,25 +248,25 @@ function UserMenu({ isMobile = false }) {
           <Button variant="ghost" size="icon" className="rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src={user?.photoURL || ""}
-                alt="User Avatar"
+                src={displayPhoto}
+                alt={displayName}
               />
-              <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
+              <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
             </Avatar>
           </Button>
         ) : (
           <SidebarMenuButton className="h-auto group-data-[collapsible=icon]:p-2">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src={user?.photoURL || ""}
-                alt="User Avatar"
+                src={displayPhoto}
+                alt={displayName}
               />
-              <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
+              <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
             </Avatar>
             <div className="group-data-[collapsible=icon]:hidden">
-              <p className="font-medium text-sm truncate">{user?.displayName || user?.email || "User"}</p>
+              <p className="font-medium text-sm truncate">{displayName}</p>
               <p className="text-xs text-muted-foreground truncate">
-                {user?.email}
+                {displayEmail}
               </p>
             </div>
           </SidebarMenuButton>
