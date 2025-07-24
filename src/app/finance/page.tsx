@@ -717,7 +717,7 @@ export default function FinancePage() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="revenue" className="text-right">Revenue</Label>
-                <Input id="revenue" name="revenue" type="number" step="0.01" defaultValue={selectedRevenue?.revenue} className="col-span-3" required />
+                <Input id="revenue" name="revenue" type="number" step="100" defaultValue={selectedRevenue?.revenue} className="col-span-3" required />
               </div>
                <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="client" className="text-right">Client</Label>
@@ -839,7 +839,7 @@ export default function FinancePage() {
 
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="expense-amount" className="text-right">Amount</Label>
-                <Input id="expense-amount" name="amount" type="number" step="0.01" 
+                <Input id="expense-amount" name="amount" type="number" step="100" 
                     key={calculatedSalary} // Re-renders the input when salary is calculated
                     defaultValue={isEditExpenseOpen ? selectedExpense?.amount : (calculatedSalary ?? '')}
                     className="col-span-3" required />
@@ -881,3 +881,5 @@ export default function FinancePage() {
     </AppShell>
   );
 }
+
+    
