@@ -462,7 +462,7 @@ export default function HomePage() {
                             </Button>
                             <Button variant="outline" asChild>
                                 <Link href="#">
-                                    Drive
+                                    LucidLink
                                 </Link>
                             </Button>
                         </CardContent>
