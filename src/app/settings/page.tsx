@@ -21,8 +21,7 @@ import { Camera } from "lucide-react";
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const [team, setTeam] = React.useState<TeamMember[]>([]);
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [currentUser, setCurrentUser] = React.useState<TeamMember | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
@@ -32,23 +31,24 @@ export default function SettingsPage() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    if (user) {
-      const unsubscribe = listenToTeamMembers((teamData) => {
-        setTeam(teamData);
-        const userProfile = teamData.find(member => member.id === user.uid);
-        if (userProfile) {
-          setCurrentUser(userProfile);
-          setName(userProfile.name);
-          setEmail(userProfile.email);
-          setPhone(userProfile.phone);
-        }
+    if (isAuthLoading) return;
+    if (!user) {
         setIsLoading(false);
-      });
-      return () => unsubscribe();
-    } else {
-      setIsLoading(false);
+        return;
     }
-  }, [user]);
+
+    const unsubscribe = listenToTeamMembers((teamData) => {
+      const userProfile = teamData.find(member => member.id === user.uid);
+      if (userProfile) {
+        setCurrentUser(userProfile);
+        setName(userProfile.name);
+        setEmail(userProfile.email);
+        setPhone(userProfile.phone);
+      }
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [user, isAuthLoading]);
   
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,16 +75,17 @@ export default function SettingsPage() {
     }
     const file = e.target.files[0];
     try {
-        await uploadProfilePicture(file, user);
+        await uploadProfilePicture(file, user.uid);
         toast({
             title: "Success",
             description: "Profile picture updated successfully."
         });
         // The real-time listener will update the UI
     } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Could not upload the profile picture.";
         toast({
             title: "Upload Failed",
-            description: "Could not upload the profile picture.",
+            description: errorMessage,
             variant: "destructive"
         });
     }
@@ -108,27 +109,27 @@ export default function SettingsPage() {
             {isLoading ? (
                <Skeleton className="h-24 w-24 rounded-full" />
             ) : (
-                <>
-                <div
-                    className="relative group w-24 h-24 cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                >
-                    <Avatar className="w-24 h-24">
-                        <AvatarImage src={currentUser?.photoURL || ''} alt={currentUser?.name} />
-                        <AvatarFallback>{currentUser?.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                    </Avatar>
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                        <Camera className="h-8 w-8 text-white" />
+                <div className="relative">
+                    <div
+                        className="relative group w-24 h-24 cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        <Avatar className="w-24 h-24">
+                            <AvatarImage src={currentUser?.photoURL || ''} alt={currentUser?.name} />
+                            <AvatarFallback>{currentUser?.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                            <Camera className="h-8 w-8 text-white" />
+                        </div>
                     </div>
+                    <Input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handlePictureUpload}
+                        className="hidden"
+                        accept="image/png, image/jpeg, image/gif"
+                    />
                 </div>
-                <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handlePictureUpload}
-                    className="hidden"
-                    accept="image/png, image/jpeg, image/gif"
-                />
-                </>
             )}
           </CardHeader>
           <CardContent>

@@ -1,5 +1,5 @@
 
-import { db, storage } from '@/lib/firebase';
+import { db, storage, auth } from '@/lib/firebase';
 import { collection, doc, setDoc, deleteDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import type { TeamMember } from '@/lib/types';
 import { type User, updateProfile } from 'firebase/auth';
@@ -74,17 +74,21 @@ export async function deleteTeamMember(teamMemberId: string): Promise<void> {
     }
 }
 
-export async function uploadProfilePicture(file: File, user: User): Promise<string> {
+export async function uploadProfilePicture(file: File, userId: string): Promise<string> {
+    if (!auth.currentUser || auth.currentUser.uid !== userId) {
+        throw new Error("Authentication error: User is not authorized to perform this action.");
+    }
+    
     try {
-        const storageRef = ref(storage, `profile-pictures/${user.uid}`);
+        const storageRef = ref(storage, `profile-pictures/${userId}`);
         const snapshot = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
         // Update Firebase Auth user profile
-        await updateProfile(user, { photoURL: downloadURL });
+        await updateProfile(auth.currentUser, { photoURL: downloadURL });
         
         // Update Firestore team member document
-        const teamMemberRef = doc(db, "team", user.uid);
+        const teamMemberRef = doc(db, "team", userId);
         await setDoc(teamMemberRef, { photoURL: downloadURL }, { merge: true });
 
         return downloadURL;
