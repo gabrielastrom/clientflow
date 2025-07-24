@@ -34,6 +34,7 @@ type TeamPerformanceData = {
   name: string;
   role: string;
   hoursThisMonth: number;
+  photoURL?: string;
 };
 
 
@@ -120,6 +121,7 @@ export default function DashboardPage() {
             name: member.name,
             role: member.role,
             hoursThisMonth: hoursThisMonth,
+            photoURL: member.photoURL
         };
     });
     setTeamPerformance(performanceData);
@@ -261,7 +263,7 @@ export default function DashboardPage() {
               ) : teamPerformance.map((member) => (
                 <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
                    <Avatar className="h-12 w-12">
-                    <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cHJvZmlsZXxlbnwwfHx8fDE3NTMyNjM5MTN8MA&ixlib=rb-4.1.0&q=80&w=1080" />
+                    <AvatarImage src={member.photoURL} alt={member.name} />
                     <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
@@ -356,7 +358,7 @@ export default function DashboardPage() {
                 ) : team.map((member) => (
                 <div key={member.id} className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
                    <Avatar className="h-12 w-12">
-                    <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMXx8cHJvZmlsZXxlbnwwfHx8fDE3NTMyNjM5MTN8MA&ixlib=rb-4.1.0&q=80&w=1080" />
+                    <AvatarImage src={member.photoURL} alt={member.name} />
                     <AvatarFallback>{member.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
