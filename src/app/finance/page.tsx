@@ -321,12 +321,12 @@ export default function FinancePage() {
     const formData = new FormData(event.currentTarget);
 
     let amount = parseFloat(formData.get("amount") as string);
-    if (expenseFormData.category === 'Salaries' && calculatedSalary !== null) {
+    if (expenseFormData.category === 'Salaries' && calculatedSalary !== null && !formData.get("amount")) {
       amount = calculatedSalary;
     }
     
     let comment = formData.get("comment") as string;
-    if(expenseFormData.category === 'Salaries') {
+    if(expenseFormData.category === 'Salaries' && !comment) {
         const member = teamMembers.find(m => m.id === expenseFormData.member);
         comment = `Salary for ${member?.name} - ${expenseFormData.month}`;
     }
@@ -841,8 +841,7 @@ export default function FinancePage() {
                 <Label htmlFor="expense-amount" className="text-right">Amount</Label>
                 <Input id="expense-amount" name="amount" type="number" step="0.01" 
                     key={calculatedSalary} // Re-renders the input when salary is calculated
-                    defaultValue={isEditExpenseOpen ? selectedExpense?.amount : (calculatedSalary ?? '')} 
-                    readOnly={isAddExpenseOpen && expenseFormData.category === 'Salaries'}
+                    defaultValue={isEditExpenseOpen ? selectedExpense?.amount : (calculatedSalary ?? '')}
                     className="col-span-3" required />
               </div>
 
