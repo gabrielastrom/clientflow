@@ -286,9 +286,6 @@ export default function ContentPage() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Content Pipeline</CardTitle>
-              <CardDescription>
-                An overview of all content in different stages.
-              </CardDescription>
             </div>
             <div className="flex items-center space-x-2">
               <Switch 
