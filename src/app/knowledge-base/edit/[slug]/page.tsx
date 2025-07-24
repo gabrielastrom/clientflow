@@ -37,7 +37,7 @@ export default function EditArticlePage({ params }: { params: { slug: string } }
             }
         }
         fetchArticle();
-    }, [params.slug, toast, router]);
+    }, [params, toast, router]);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -137,4 +137,3 @@ export default function EditArticlePage({ params }: { params: { slug: string } }
         </AppShell>
     );
 }
-

@@ -49,7 +49,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             }
         }
         fetchArticle();
-    }, [params.slug, toast]);
+    }, [params, toast]);
     
     const handleDelete = async () => {
         if (!article) return;
