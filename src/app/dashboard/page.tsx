@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { AppShell } from "@/components/app-shell";
 import { financialData, appointments as allAppointments, clients } from "@/lib/data";
-import { type Appointment, type TeamMember, type TimeEntry, type Content, type Revenue } from "@/lib/types";
+import { type Appointment, type TeamMember, type TimeEntry, type Content, type Revenue, type Expense } from "@/lib/types";
 import { Clock, DollarSign, Pencil } from "lucide-react";
 import FinancialChart from "./financial-chart";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getContent as fetchContent } from "@/services/contentService";
 import { useAuth } from "@/contexts/auth-context";
 import { listenToRevenues } from "@/services/revenueService";
+import { listenToExpenses } from "@/services/expenseService";
 
 
 type TeamPerformanceData = {
@@ -59,6 +60,10 @@ export default function DashboardPage() {
   const [notes, setNotes] = React.useState("");
   const [monthlyRevenue, setMonthlyRevenue] = React.useState(0);
   const [revenueChange, setRevenueChange] = React.useState(0);
+  const [monthlyExpenses, setMonthlyExpenses] = React.useState(0);
+  const [expenseChange, setExpenseChange] = React.useState(0);
+  const [monthlyProfit, setMonthlyProfit] = React.useState(0);
+  const [profitChange, setProfitChange] = React.useState(0);
 
 
   React.useEffect(() => {
@@ -146,12 +151,46 @@ export default function DashboardPage() {
             setRevenueChange(0);
         }
     });
+    
+    const unsubscribeExpenses = listenToExpenses((allExpenses) => {
+        const now = new Date();
+        const currentMonthName = format(now, 'MMMM yyyy');
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthName = format(lastMonth, 'MMMM yyyy');
+
+        const currentMonthTotal = allExpenses
+            .filter(e => e.month === currentMonthName)
+            .reduce((sum, e) => sum + e.amount, 0);
+        
+        setMonthlyExpenses(currentMonthTotal);
+
+        const lastMonthTotal = allExpenses
+            .filter(e => e.month === lastMonthName)
+            .reduce((sum, e) => sum + e.amount, 0);
+
+        if (lastMonthTotal > 0) {
+            const change = ((currentMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
+            setExpenseChange(change);
+        } else if (currentMonthTotal > 0) {
+            setExpenseChange(100);
+        } else {
+            setExpenseChange(0);
+        }
+    });
+
 
     return () => {
         unsubscribeTeam();
         unsubscribeRevenues();
+        unsubscribeExpenses();
     };
   }, [toast]);
+  
+  React.useEffect(() => {
+    const profit = monthlyRevenue - monthlyExpenses;
+    setMonthlyProfit(profit);
+  }, [monthlyRevenue, monthlyExpenses]);
+
 
   React.useEffect(() => {
     if (user && team.length > 0) {
@@ -268,10 +307,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {financialData.monthly.expenses.toLocaleString()} kr
+                {monthlyExpenses.toLocaleString()} kr
               </div>
               <p className="text-xs text-muted-foreground">
-                +5.1% from last month
+                 {expenseChange >= 0 ? '+' : ''}{expenseChange.toFixed(1)}% from last month
               </p>
             </CardContent>
           </Card>
@@ -283,10 +322,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {financialData.monthly.profit.toLocaleString()} kr
+                {monthlyProfit.toLocaleString()} kr
               </div>
               <p className="text-xs text-muted-foreground">
-                +12.8% from last month
+                &nbsp;
               </p>
             </CardContent>
           </Card>
@@ -528,3 +567,5 @@ export default function DashboardPage() {
     </AppShell>
   );
 }
+
+    
