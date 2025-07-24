@@ -1,8 +1,8 @@
+
 "use client";
 
 import * as React from "react";
 import { Pie, PieChart, Cell, Label } from "recharts";
-
 import {
   ChartContainer,
   ChartTooltip,
@@ -11,27 +11,44 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { financialData } from "@/lib/data";
 
-const chartData = financialData.revenueByClient;
+type RevenueByClientChartProps = {
+  data: {
+    name: string;
+    revenue: number;
+    fill: string;
+  }[];
+};
 
-const chartConfig = {
-  revenue: {
-    label: "Revenue",
-  },
-  ...chartData.reduce((acc, client) => {
-    acc[client.name as keyof typeof acc] = {
-      label: client.name,
-      color: client.fill,
-    };
-    return acc;
-  }, {} as { [key: string]: { label: string, color: string } }),
-} satisfies ChartConfig;
+export default function RevenueByClientChart({ data: chartData }: RevenueByClientChartProps) {
+  const chartConfig = React.useMemo(() => {
+    if (!chartData) return {};
+    return {
+      revenue: {
+        label: "Revenue",
+      },
+      ...chartData.reduce((acc, client) => {
+        acc[client.name as keyof typeof acc] = {
+          label: client.name,
+          color: client.fill,
+        };
+        return acc;
+      }, {} as { [key: string]: { label: string, color: string } }),
+    } satisfies ChartConfig;
+  }, [chartData]);
 
-export default function RevenueByClientChart() {
   const totalRevenue = React.useMemo(() => {
+    if (!chartData) return 0;
     return chartData.reduce((acc, curr) => acc + curr.revenue, 0);
-  }, []);
+  }, [chartData]);
+
+  if (!chartData || chartData.length === 0) {
+    return (
+        <div className="h-[350px] w-full flex items-center justify-center">
+            <p className="text-muted-foreground">No revenue data for this month.</p>
+        </div>
+    )
+  }
 
   return (
     <div className="h-[350px] w-full">

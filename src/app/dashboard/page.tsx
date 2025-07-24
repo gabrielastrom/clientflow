@@ -47,6 +47,12 @@ type MonthlyRevenueData = {
   revenue: number;
 };
 
+type RevenueByClientData = {
+  name: string;
+  revenue: number;
+  fill: string;
+};
+
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -69,6 +75,7 @@ export default function DashboardPage() {
   const [expenseChange, setExpenseChange] = React.useState(0);
   const [monthlyProfit, setMonthlyProfit] = React.useState(0);
   const [revenueTrend, setRevenueTrend] = React.useState<MonthlyRevenueData[]>([]);
+  const [revenueByClient, setRevenueByClient] = React.useState<RevenueByClientData[]>([]);
 
 
   React.useEffect(() => {
@@ -134,7 +141,7 @@ export default function DashboardPage() {
     const unsubscribeRevenues = listenToRevenues((allRevenues) => {
         const now = new Date();
         const currentMonthName = format(now, 'MMMM yyyy');
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonth = subMonths(now, 1);
         const lastMonthName = format(lastMonth, 'MMMM yyyy');
 
         const currentMonthTotal = allRevenues
@@ -161,7 +168,6 @@ export default function DashboardPage() {
         for (let i = 6; i >= 0; i--) {
             const date = subMonths(now, i);
             const monthName = format(date, 'MMMM yyyy');
-            const shortMonthName = format(date, 'MMM');
             trendData[monthName] = 0;
         }
 
@@ -170,11 +176,6 @@ export default function DashboardPage() {
                 trendData[r.month] += r.revenue;
             }
         });
-
-        const chartData = Object.entries(trendData).map(([month, revenue]) => ({
-            month: format(new Date(month), 'MMM'),
-            revenue: revenue,
-        })).sort((a,b) => new Date(subMonths(now, 6)).getMonth() + (Object.keys(trendData).indexOf(a.month)) - (new Date(subMonths(now, 6)).getMonth() + (Object.keys(trendData).indexOf(b.month))));
         
         const sortedTrend = Array.from({length: 7}, (_, i) => {
             const date = subMonths(now, 6-i);
@@ -187,6 +188,29 @@ export default function DashboardPage() {
         })
         
         setRevenueTrend(sortedTrend);
+
+        // Calculate revenue by client for the current month
+        const revenueByClientData: Record<string, number> = {};
+        allRevenues
+            .filter(r => r.month === currentMonthName)
+            .forEach(r => {
+                if (!revenueByClientData[r.client]) {
+                    revenueByClientData[r.client] = 0;
+                }
+                revenueByClientData[r.client] += r.revenue;
+            });
+        
+        const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+        const clientChartData = Object.entries(revenueByClientData)
+            .map(([clientName, totalRevenue], index) => ({
+                name: clientName,
+                revenue: totalRevenue,
+                fill: chartColors[index % chartColors.length],
+            }))
+            .sort((a,b) => b.revenue - a.revenue);
+
+        setRevenueByClient(clientChartData);
+
     });
     
     const unsubscribeExpenses = listenToExpenses((allExpenses) => {
@@ -398,7 +422,7 @@ export default function DashboardPage() {
                     <CardDescription>This month's revenue distribution.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RevenueByClientChart />
+                    <RevenueByClientChart data={revenueByClient} />
                 </CardContent>
             </Card>
         </div>
