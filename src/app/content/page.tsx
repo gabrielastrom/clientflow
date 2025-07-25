@@ -184,7 +184,6 @@ export default function ContentPage() {
       title: formData.get("title") as string,
       client: formData.get("client") as string,
       status: (formData.get("status") as Content["status"]) || "To Do",
-      platform: (formData.get("platform") as Content["platform"]) || "Instagram",
       deadline: formData.get("deadline") as string,
       owner: formData.get("owner") as string,
       link: formData.get("link") as string || undefined,
@@ -210,7 +209,6 @@ export default function ContentPage() {
       title: formData.get("title") as string,
       client: formData.get("client") as string,
       status: formData.get("status") as Content["status"],
-      platform: formData.get("platform") as Content["platform"],
       deadline: formData.get("deadline") as string,
       owner: formData.get("owner") as string,
       link: formData.get("link") as string || undefined,
@@ -320,12 +318,6 @@ export default function ContentPage() {
                     </Button>
                   </TableHead>
                   <TableHead>
-                    <Button variant="ghost" onClick={() => requestSort('platform')}>
-                      Platform
-                      {getSortIcon('platform')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
                     <Button variant="ghost" onClick={() => requestSort('deadline')}>
                       Deadline
                       {getSortIcon('deadline')}
@@ -349,7 +341,6 @@ export default function ContentPage() {
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                       <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                       <TableCell><Skeleton className="h-8 w-8" /></TableCell>
                       <TableCell><Skeleton className="h-8 w-8" /></TableCell>
@@ -357,7 +348,7 @@ export default function ContentPage() {
                   ))
                 ) : sortedContent.length === 0 ? (
                   <TableRow>
-                      <TableCell colSpan={8} className="h-24 text-center">
+                      <TableCell colSpan={7} className="h-24 text-center">
                           {showCurrentMonthOnly ? "No content found for the current month." : "No content found. Add content to get started."}
                       </TableCell>
                   </TableRow>
@@ -371,7 +362,6 @@ export default function ContentPage() {
                           {item.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{item.platform}</TableCell>
                       <TableCell>{item.deadline}</TableCell>
                       <TableCell>{item.owner}</TableCell>
                       <TableCell>
@@ -460,7 +450,7 @@ export default function ContentPage() {
                             {item.status}
                           </Badge>
                           <div className="text-muted-foreground">
-                              {item.platform}
+                              {item.deadline}
                           </div>
                       </div>
                       </CardContent>
@@ -511,20 +501,6 @@ export default function ContentPage() {
                       <SelectItem value="In Progress">In Progress</SelectItem>
                       <SelectItem value="In Review">In Review</SelectItem>
                       <SelectItem value="Done">Done</SelectItem>
-                    </SelectContent>
-                  </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="platform" className="text-right">Platform</Label>
-                 <Select name="platform" defaultValue={selectedContent?.platform ?? "Instagram"}>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select a platform" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Instagram">Instagram</SelectItem>
-                      <SelectItem value="TikTok">TikTok</SelectItem>
-                      <SelectItem value="X">X</SelectItem>
-                      <SelectItem value="Facebook">Facebook</SelectItem>
                     </SelectContent>
                   </Select>
               </div>
@@ -586,7 +562,7 @@ export default function ContentPage() {
             <DialogHeader>
             <DialogTitle>{selectedContent?.title}</DialogTitle>
             <DialogDescription>
-                {selectedContent?.platform} content for {selectedContent?.client}
+                Content for {selectedContent?.client}
             </DialogDescription>
             </DialogHeader>
             {selectedContent && (

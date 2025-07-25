@@ -64,7 +64,6 @@ export type Content = {
   title: string;
   client: string;
   status: 'To Do' | 'In Progress' | 'In Review' | 'Done';
-  platform: 'Instagram' | 'TikTok' | 'X' | 'Facebook';
   deadline: string;
   owner: string;
   link?: string;

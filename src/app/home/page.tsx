@@ -258,7 +258,6 @@ export default function HomePage() {
       title: formData.get("title") as string,
       client: formData.get("client") as string,
       status: "To Do",
-      platform: formData.get("platform") as Content["platform"],
       deadline: formData.get("deadline") as string,
       owner: currentUserData.name,
       description: formData.get("description") as string || undefined,
@@ -607,20 +606,6 @@ export default function HomePage() {
                         {clients.map((client) => (
                           <SelectItem key={client.id} value={client.name}>{client.name}</SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="platform" className="text-right">Platform</Label>
-                    <Select name="platform" defaultValue="Instagram">
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Select a platform" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Instagram">Instagram</SelectItem>
-                        <SelectItem value="TikTok">TikTok</SelectItem>
-                        <SelectItem value="X">X</SelectItem>
-                        <SelectItem value="Facebook">Facebook</SelectItem>
                       </SelectContent>
                     </Select>
                 </div>

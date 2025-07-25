@@ -540,7 +540,6 @@ export default function ClientsPage() {
                                   <TableRow>
                                     <TableHead>Title</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead>Platform</TableHead>
                                     <TableHead>Deadline</TableHead>
                                     <TableHead>Owner</TableHead>
                                     <TableHead>Link</TableHead>
@@ -556,7 +555,6 @@ export default function ClientsPage() {
                                           {item.status}
                                         </Badge>
                                       </TableCell>
-                                      <TableCell>{item.platform}</TableCell>
                                       <TableCell>{item.deadline}</TableCell>
                                       <TableCell>{item.owner}</TableCell>
                                       <TableCell>
@@ -632,7 +630,7 @@ export default function ClientsPage() {
                                         {item.status}
                                       </Badge>
                                       <div className="text-muted-foreground">
-                                          {item.platform} - {item.deadline}
+                                          {item.deadline}
                                       </div>
                                     </div>
                                    </CardContent>
@@ -969,7 +967,7 @@ export default function ClientsPage() {
             <DialogHeader>
             <DialogTitle>{selectedContentItem?.title}</DialogTitle>
             <DialogDescription>
-                {selectedContentItem?.platform} content for {selectedContentItem?.client}
+                Content for {selectedContentItem?.client}
             </DialogDescription>
             </DialogHeader>
             {selectedContentItem && (
