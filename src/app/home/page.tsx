@@ -339,7 +339,7 @@ export default function HomePage() {
                     <h1 className="text-3xl font-bold tracking-tight">Welcome back, {capitalizedName}!</h1>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => setIsLogTimeOpen(true)} disabled={!currentUserData}>
+                    <Button onClick={() => setIsLogTimeOpen(true)} disabled={!currentUserData} className="bg-green-600 hover:bg-green-700">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Log Time
                     </Button>
@@ -358,7 +358,7 @@ export default function HomePage() {
                             <CardDescription>Content assigned to you with deadlines this week and month.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Tabs defaultValue="week">
+                            <Tabs defaultValue="month">
                                 <TabsList>
                                     <TabsTrigger value="week">This Week</TabsTrigger>
                                     <TabsTrigger value="month">This Month</TabsTrigger>
