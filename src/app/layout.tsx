@@ -24,7 +24,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#09090B" media="(prefers-color-scheme: dark)" />
       </head>
-      <body className="font-body antialiased h-full">
+      <body className="font-body antialiased h-full" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
