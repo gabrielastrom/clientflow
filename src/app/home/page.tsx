@@ -474,17 +474,17 @@ export default function HomePage() {
                             <CardDescription>Core tools for your workflow.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-3 gap-4">
-                            <Button variant="outline" asChild>
+                            <Button asChild className="bg-blue-500 text-white hover:bg-blue-600">
                                 <Link href="#">
                                     Email
                                 </Link>
                             </Button>
-                            <Button variant="outline" asChild>
+                            <Button asChild className="bg-indigo-500 text-white hover:bg-indigo-600">
                                 <Link href="#">
                                     Discord
                                 </Link>
                             </Button>
-                            <Button variant="outline" asChild>
+                            <Button asChild className="bg-slate-700 text-white hover:bg-slate-800">
                                 <Link href="#">
                                     LucidLink
                                 </Link>
