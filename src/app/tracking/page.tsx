@@ -91,7 +91,7 @@ export default function TrackingPage() {
   const { toast } = useToast();
 
   React.useEffect(() => {
-    // Set the default date only on the client
+    // Set the default date and month on the client to avoid hydration mismatch
     const now = new Date();
     setDefaultDate(now.toISOString().split("T")[0]);
     setSelectedMonth(now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2));
