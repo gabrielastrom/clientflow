@@ -1,4 +1,4 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const withPWA = require('next-pwa')({
   dest: 'public',
@@ -7,9 +7,8 @@ const withPWA = require('next-pwa')({
   disable: process.env.NODE_ENV === 'development',
 });
 
-
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'standalone', // ✅ för Firebase Hosting
   images: {
     remotePatterns: [
       {
