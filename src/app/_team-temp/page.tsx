@@ -107,14 +107,19 @@ export default function TeamPage() {
     let sortableItems = [...team];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
-        let aValue: string | number | string[] = a[sortConfig.key];
-        let bValue: string | number | string[] = b[sortConfig.key];
-        
+        let aValue: string | number | string[] | undefined = a[sortConfig.key];
+        let bValue: string | number | string[] | undefined = b[sortConfig.key];
+  
         if (sortConfig.key === 'assignedClients') {
-          aValue = a.assignedClients.length;
-          bValue = b.assignedClients.length;
+          aValue = (a.assignedClients ?? []).length;
+          bValue = (b.assignedClients ?? []).length;
         }
-
+  
+        // Hantera undefined innan jämförelse
+        if (aValue === undefined || bValue === undefined) {
+          return 0; // Jämför ej om någon sida saknar värde
+        }
+  
         if (aValue < bValue) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
