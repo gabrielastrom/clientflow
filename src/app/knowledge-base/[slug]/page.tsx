@@ -25,7 +25,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import ReactMarkdown from "react-markdown";
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
+type PageProps = {
+    params: { slug: string };
+    searchParams?: { [key: string]: string | string[] | undefined };
+};
+
+export default function ArticlePage({ params }: PageProps) {
     const [article, setArticle] = React.useState<Article | null>(null);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false);

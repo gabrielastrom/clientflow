@@ -16,8 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
+type PageProps = {
+    params: { slug: string };
+    searchParams?: { [key: string]: string | string[] | undefined };
+};
 
-export default function EditArticlePage({ params }: { params: { slug: string } }) {
+export default function EditArticlePage({ params }: PageProps) {
     const [article, setArticle] = React.useState<Article | null>(null);
     const [isLoading, setIsLoading] = React.useState(true);
     const router = useRouter();
