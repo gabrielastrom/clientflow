@@ -80,10 +80,12 @@ export default function ClientsPage() {
   const [clientNotes, setClientNotes] = React.useState<Record<string, string>>({});
   const [selectedContentItem, setSelectedContentItem] = React.useState<Content | null>(null);
   const [isContentViewOpen, setIsContentViewOpen] = React.useState(false);
+  const [defaultDate, setDefaultDate] = React.useState('');
 
   const { toast } = useToast();
 
   React.useEffect(() => {
+    setDefaultDate(new Date().toLocaleDateString('en-CA'));
     async function fetchData() {
         setIsLoading(true);
         try {
@@ -729,7 +731,7 @@ export default function ClientsPage() {
                   id="joinDate"
                   name="joinDate"
                   type="date"
-                  defaultValue={new Date().toLocaleDateString('en-CA')}
+                  defaultValue={defaultDate}
                   className="col-span-3"
                   required
                 />

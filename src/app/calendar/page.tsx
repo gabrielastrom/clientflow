@@ -66,10 +66,12 @@ export default function CalendarPage() {
   const [team, setTeam] = React.useState<TeamMember[]>([]);
   const [notes, setNotes] = React.useState("");
   const { toast } = useToast();
+  const [defaultDate, setDefaultDate] = React.useState('');
 
   React.useEffect(() => {
     // Set date on client-side to avoid hydration mismatch
     setDate(new Date());
+    setDefaultDate(new Date().toLocaleDateString('en-CA'));
 
     async function fetchClientsData() {
         try {
@@ -400,7 +402,7 @@ export default function CalendarPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="date" className="text-right">Date</Label>
-                <Input id="date" name="date" type="date" defaultValue={date?.toLocaleDateString('en-CA')} className="col-span-3" required/>
+                <Input id="date" name="date" type="date" defaultValue={defaultDate} className="col-span-3" required/>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="time" className="text-right">Time</Label>
@@ -469,11 +471,11 @@ export default function CalendarPage() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="date" className="text-right">Date</Label>
-                  <Input id="date" name="date" type="date" defaultValue={selectedAppointment.date?.toLocaleDateString('en-CA')} className="col-span-3" required/>
+                  <Input id="date" name="date" type="date" defaultValue={new Date(selectedAppointment.date).toLocaleDateString('en-CA')} className="col-span-3" required/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="time" className="text-right">Time</Label>
-                  <Input id="time" name="time" type="time" defaultValue={selectedAppointment.date?.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} className="col-span-3" required/>
+                  <Input id="time" name="time" type="time" defaultValue={new Date(selectedAppointment.date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} className="col-span-3" required/>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="client" className="text-right">Client</Label>

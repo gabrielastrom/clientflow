@@ -338,7 +338,7 @@ export default function HomePage() {
                     <h1 className="text-3xl font-bold tracking-tight">Welcome back, {capitalizedName}!</h1>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={() => setIsLogTimeOpen(true)} disabled={!currentUserData} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Button onClick={() => setIsLogTimeOpen(true)} disabled={!currentUserData} variant="secondary">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Log Time
                     </Button>
@@ -473,17 +473,17 @@ export default function HomePage() {
                             <CardDescription>Core tools for your workflow.</CardDescription>
                         </CardHeader>
                         <CardContent className="grid grid-cols-3 gap-4">
-                            <Button asChild className="bg-blue-500 text-white hover:bg-blue-600">
+                            <Button asChild>
                                 <Link href="#">
                                     Email
                                 </Link>
                             </Button>
-                            <Button asChild className="bg-indigo-500 text-white hover:bg-indigo-600">
+                            <Button asChild variant="secondary">
                                 <Link href="#">
                                     Discord
                                 </Link>
                             </Button>
-                            <Button asChild className="bg-slate-700 text-white hover:bg-slate-800">
+                             <Button asChild variant="secondary">
                                 <Link href="#">
                                     LucidLink
                                 </Link>

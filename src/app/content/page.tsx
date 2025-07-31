@@ -84,10 +84,12 @@ export default function ContentPage() {
   const [isTaskStatusModalOpen, setIsTaskStatusModalOpen] = React.useState(false);
   const [sortConfig, setSortConfig] = React.useState<{ key: SortableContentKeys; direction: 'ascending' | 'descending' } | null>(null);
   const [showCurrentMonthOnly, setShowCurrentMonthOnly] = React.useState(false);
+  const [defaultDate, setDefaultDate] = React.useState('');
 
   const { toast } = useToast();
   
   React.useEffect(() => {
+    setDefaultDate(new Date().toLocaleDateString('en-CA'));
     async function fetchData() {
         setIsLoading(true);
         try {
@@ -506,7 +508,7 @@ export default function ContentPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="deadline" className="text-right">Deadline</Label>
-                <Input id="deadline" name="deadline" type="date" defaultValue={selectedContent?.deadline ?? new Date().toLocaleDateString('en-CA')} className="col-span-3" required />
+                <Input id="deadline" name="deadline" type="date" defaultValue={selectedContent?.deadline ?? defaultDate} className="col-span-3" required />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="owner" className="text-right">Owner</Label>

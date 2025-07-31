@@ -50,31 +50,3 @@ export const content: Content[] = [
   { id: '6', title: 'Q3 Results Infographic', client: 'Glamour Inc.', status: 'To Do', deadline: getFutureDate(25), owner: 'Taylor Morgan', description: 'An easy-to-read infographic summarizing the key success metrics from the third quarter. Use brand colors and clear data visualizations.' },
   { id: '7', title: 'Plan August content calendar', client: 'Peak Fitness', status: 'To Do', deadline: getFutureDate(1), owner: 'Alex Ray', description: 'Plan out the content for next month.' },
 ];
-
-
-export const financialData = {
-    monthly: {
-        revenue: 12500,
-        expenses: 4200,
-        profit: 8300,
-    },
-    yearly: {
-        revenue: 85000,
-        expenses: 32000,
-        profit: 53000,
-    },
-    revenueByClient: [
-        { name: 'Glamour Inc.', revenue: 35000, fill: "hsl(var(--chart-1))" },
-        { name: 'Peak Fitness', revenue: 40000, fill: "hsl(var(--chart-2))" },
-        { name: 'The Coffee House', revenue: 10000, fill: "hsl(var(--chart-4))" },
-    ],
-    profitTrend: [
-        { month: 'Jan', profit: 7000 },
-        { month: 'Feb', profit: 7500 },
-        { month: 'Mar', profit: 9000 },
-        { month: 'Apr', profit: 8200 },
-        { month: 'May', profit: 9500 },
-        { month: 'Jun', profit: 10200 },
-        { month: 'Jul', profit: 8300 },
-    ],
-};
