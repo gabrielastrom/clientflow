@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import type { TimeEntry } from '@/lib/types';
@@ -12,8 +13,10 @@ export async function getTimeEntries(): Promise<TimeEntry[]> {
             return [];
         }
         const list = snapshot.docs.map(doc => doc.data() as TimeEntry);
-        // Sort by date descending
-        return list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // Filter out entries without a date before sorting
+        return list
+            .filter(entry => entry.date)
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } catch (error) {
         console.error("Error fetching time entries: ", error);
         throw new Error("Could not fetch time entries.");
