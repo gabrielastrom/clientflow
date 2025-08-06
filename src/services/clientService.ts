@@ -2,10 +2,16 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { Client } from '@/lib/types';
 
+function getDb() {
+    if (!db) {
+        throw new Error('Firestore has not been initialized');
+    }
+    return db;
+}
+
 export async function getClients(): Promise<Client[]> {
     try {
-        const clientsCol = collection(db, 'clients');
-        const clientSnapshot = await getDocs(clientsCol);
+        const clientSnapshot = await getDocs(collection(getDb(), 'clients'));
         if (clientSnapshot.empty) {
             console.log('No clients found in Firestore.');
             return [];
@@ -20,9 +26,10 @@ export async function getClients(): Promise<Client[]> {
 
 export async function addClient(client: Omit<Client, 'id'>): Promise<Client> {
     try {
-        const newId = doc(collection(db, 'clients')).id;
+        const dbInstance = getDb();
+        const newId = doc(collection(dbInstance, 'clients')).id;
         const newClient: Client = { ...client, id: newId };
-        await setDoc(doc(db, "clients", newId), newClient);
+        await setDoc(doc(dbInstance, "clients", newId), newClient);
         return newClient;
     } catch (error) {
         console.error("Error adding client: ", error);
@@ -32,7 +39,7 @@ export async function addClient(client: Omit<Client, 'id'>): Promise<Client> {
 
 export async function updateClient(client: Client): Promise<void> {
     try {
-        const clientRef = doc(db, "clients", client.id);
+        const clientRef = doc(getDb(), "clients", client.id);
         await setDoc(clientRef, client, { merge: true });
     } catch (error) {
         console.error("Error updating client: ", error);
@@ -42,7 +49,7 @@ export async function updateClient(client: Client): Promise<void> {
 
 export async function deleteClient(clientId: string): Promise<void> {
     try {
-        await deleteDoc(doc(db, "clients", clientId));
+        await deleteDoc(doc(getDb(), "clients", clientId));
     } catch (error) {
         console.error("Error deleting client: ", error);
         throw new Error("Failed to delete client.");

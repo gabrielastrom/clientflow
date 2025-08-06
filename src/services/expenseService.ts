@@ -3,11 +3,16 @@ import { db } from '@/lib/firebase';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import type { Expense } from '@/lib/types';
 
-const expensesCollection = collection(db, 'expenses');
+function getDb() {
+    if (!db) {
+        throw new Error('Firestore has not been initialized');
+    }
+    return db;
+}
 
 export function listenToExpenses(callback: (expenses: Expense[]) => void): () => void {
     try {
-        const unsubscribe = onSnapshot(expensesCollection, (snapshot) => {
+        const unsubscribe = onSnapshot(collection(getDb(), 'expenses'), (snapshot) => {
             if (snapshot.empty) {
                 callback([]);
                 return;
@@ -30,9 +35,10 @@ export function listenToExpenses(callback: (expenses: Expense[]) => void): () =>
 
 export async function addExpense(expense: Omit<Expense, 'id'>): Promise<Expense> {
     try {
-        const newId = doc(expensesCollection).id;
+        const dbInstance = getDb();
+        const newId = doc(collection(dbInstance, 'expenses')).id;
         const newExpense: Expense = { ...expense, id: newId };
-        await setDoc(doc(db, "expenses", newId), newExpense);
+        await setDoc(doc(dbInstance, "expenses", newId), newExpense);
         return newExpense;
     } catch (error) {
         console.error("Error adding expense: ", error);
@@ -42,7 +48,7 @@ export async function addExpense(expense: Omit<Expense, 'id'>): Promise<Expense>
 
 export async function updateExpense(expense: Expense): Promise<void> {
     try {
-        const expenseRef = doc(db, "expenses", expense.id);
+        const expenseRef = doc(getDb(), "expenses", expense.id);
         await setDoc(expenseRef, expense, { merge: true });
     } catch (error) {
         console.error("Error updating expense: ", error);
@@ -52,7 +58,7 @@ export async function updateExpense(expense: Expense): Promise<void> {
 
 export async function deleteExpense(expenseId: string): Promise<void> {
     try {
-        await deleteDoc(doc(db, "expenses", expenseId));
+        await deleteDoc(doc(getDb(), "expenses", expenseId));
     } catch (error) {
         console.error("Error deleting expense: ", error);
         throw new Error("Failed to delete expense.");

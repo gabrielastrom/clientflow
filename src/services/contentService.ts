@@ -2,10 +2,16 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { Content } from '@/lib/types';
 
+function getDb() {
+    if (!db) {
+        throw new Error('Firestore has not been initialized');
+    }
+    return db;
+}
+
 export async function getContent(): Promise<Content[]> {
     try {
-        const contentCol = collection(db, 'content');
-        const snapshot = await getDocs(contentCol);
+        const snapshot = await getDocs(collection(getDb(), 'content'));
         if (snapshot.empty) {
             console.log('No content found in Firestore.');
             return [];
@@ -20,9 +26,10 @@ export async function getContent(): Promise<Content[]> {
 
 export async function addContent(content: Omit<Content, 'id'>): Promise<Content> {
     try {
-        const newId = doc(collection(db, 'content')).id;
+        const dbInstance = getDb();
+        const newId = doc(collection(dbInstance, 'content')).id;
         const newContent: Content = { ...content, id: newId };
-        await setDoc(doc(db, "content", newId), newContent);
+        await setDoc(doc(dbInstance, "content", newId), newContent);
         return newContent;
     } catch (error) {
         console.error("Error adding content: ", error);
@@ -32,7 +39,7 @@ export async function addContent(content: Omit<Content, 'id'>): Promise<Content>
 
 export async function updateContent(content: Content): Promise<void> {
     try {
-        const contentRef = doc(db, "content", content.id);
+        const contentRef = doc(getDb(), "content", content.id);
         await setDoc(contentRef, content, { merge: true });
     } catch (error) {
         console.error("Error updating content: ", error);
@@ -42,7 +49,7 @@ export async function updateContent(content: Content): Promise<void> {
 
 export async function deleteContent(contentId: string): Promise<void> {
     try {
-        await deleteDoc(doc(db, "content", contentId));
+        await deleteDoc(doc(getDb(), "content", contentId));
     } catch (error) {
         console.error("Error deleting content: ", error);
         throw new Error("Failed to delete content.");

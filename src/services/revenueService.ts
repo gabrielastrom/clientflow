@@ -3,11 +3,16 @@ import { db } from '@/lib/firebase';
 import { collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import type { Revenue } from '@/lib/types';
 
-const revenuesCollection = collection(db, 'revenues');
+function getDb() {
+    if (!db) {
+        throw new Error('Firestore has not been initialized');
+    }
+    return db;
+}
 
 export function listenToRevenues(callback: (revenues: Revenue[]) => void): () => void {
     try {
-        const unsubscribe = onSnapshot(revenuesCollection, (snapshot) => {
+        const unsubscribe = onSnapshot(collection(getDb(), 'revenues'), (snapshot) => {
             if (snapshot.empty) {
                 callback([]);
                 return;
@@ -30,9 +35,10 @@ export function listenToRevenues(callback: (revenues: Revenue[]) => void): () =>
 
 export async function addRevenue(revenue: Omit<Revenue, 'id'>): Promise<Revenue> {
     try {
-        const newId = doc(revenuesCollection).id;
+        const dbInstance = getDb();
+        const newId = doc(collection(dbInstance, 'revenues')).id;
         const newRevenue: Revenue = { ...revenue, id: newId };
-        await setDoc(doc(db, "revenues", newId), newRevenue);
+        await setDoc(doc(dbInstance, "revenues", newId), newRevenue);
         return newRevenue;
     } catch (error) {
         console.error("Error adding revenue: ", error);
@@ -42,7 +48,7 @@ export async function addRevenue(revenue: Omit<Revenue, 'id'>): Promise<Revenue>
 
 export async function updateRevenue(revenue: Revenue): Promise<void> {
     try {
-        const revenueRef = doc(db, "revenues", revenue.id);
+        const revenueRef = doc(getDb(), "revenues", revenue.id);
         await setDoc(revenueRef, revenue, { merge: true });
     } catch (error) {
         console.error("Error updating revenue: ", error);
@@ -52,7 +58,7 @@ export async function updateRevenue(revenue: Revenue): Promise<void> {
 
 export async function deleteRevenue(revenueId: string): Promise<void> {
     try {
-        await deleteDoc(doc(db, "revenues", revenueId));
+        await deleteDoc(doc(getDb(), "revenues", revenueId));
     } catch (error) {
         console.error("Error deleting revenue: ", error);
         throw new Error("Failed to delete revenue.");
