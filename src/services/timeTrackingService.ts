@@ -1,13 +1,18 @@
 
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { TimeEntry } from '@/lib/types';
 
-const timeEntriesCollection = collection(db, 'time-entries');
+function getDb() {
+    if (!db) {
+        throw new Error('Firestore has not been initialized');
+    }
+    return db;
+}
 
 export async function getTimeEntries(): Promise<TimeEntry[]> {
     try {
-        const snapshot = await getDocs(timeEntriesCollection);
+        const snapshot = await getDocs(collection(getDb(), 'time-entries'));
         if (snapshot.empty) {
             console.log('No time entries found in Firestore.');
             return [];
@@ -25,9 +30,10 @@ export async function getTimeEntries(): Promise<TimeEntry[]> {
 
 export async function addTimeEntry(entry: Omit<TimeEntry, 'id'>): Promise<TimeEntry> {
     try {
-        const newId = doc(collection(db, 'time-entries')).id;
+        const dbInstance = getDb();
+        const newId = doc(collection(dbInstance, 'time-entries')).id;
         const newEntry: TimeEntry = { ...entry, id: newId };
-        await setDoc(doc(db, "time-entries", newId), newEntry);
+        await setDoc(doc(dbInstance, "time-entries", newId), newEntry);
         return newEntry;
     } catch (error) {
         console.error("Error adding time entry: ", error);
@@ -37,7 +43,7 @@ export async function addTimeEntry(entry: Omit<TimeEntry, 'id'>): Promise<TimeEn
 
 export async function updateTimeEntry(entry: TimeEntry): Promise<void> {
     try {
-        const entryRef = doc(db, "time-entries", entry.id);
+        const entryRef = doc(getDb(), "time-entries", entry.id);
         await setDoc(entryRef, entry, { merge: true });
     } catch (error) {
         console.error("Error updating time entry: ", error);
@@ -47,7 +53,7 @@ export async function updateTimeEntry(entry: TimeEntry): Promise<void> {
 
 export async function deleteTimeEntry(entryId: string): Promise<void> {
     try {
-        await deleteDoc(doc(db, "time-entries", entryId));
+        await deleteDoc(doc(getDb(), "time-entries", entryId));
     } catch (error) {
         console.error("Error deleting time entry: ", error);
         throw new Error("Failed to delete time entry.");
