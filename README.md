@@ -1,5 +1,4 @@
-# Firebase Studio
+# Business Management System - Vibe Coding Project
 
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
+Building the infrastructure for managing a SMMA,
+using Firebase, Codex, Gemini etc.
