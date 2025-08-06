@@ -39,6 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   React.useEffect(() => {
+    if (!auth) {
+      console.error("Firebase Auth is not initialized.");
+      setIsLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // Every time auth state changes, ensure the user profile exists in Firestore.
